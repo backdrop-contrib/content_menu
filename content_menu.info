@@ -1,0 +1,6 @@
+name = "Content Menu"
+dependencies[] = "menu"
+description = "Content centric menu management interface for editors."
+core = "7.x"
+php = "5.2.4"
+files[] = "content_menu.menu_admin.inc"
