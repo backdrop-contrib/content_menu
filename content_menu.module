@@ -3,8 +3,6 @@
  * @file
  * Main code for the content_menu.module.
  *
- * ToDo: Implement menu item target type retrieval and operations to be
- *       hook-based and therefore flexibly extensible by other modules.
  * ToDo: Use view query alter hook to mandatorily filter existing-node-selection
  *       by only those node types that can have a menu item in the resp. menu.
  * ToDo: Mark menu items in item listing that are linked to unpublished content.
@@ -260,7 +258,7 @@ function content_menu_form_menu_item_delete_form_alter(&$form, &$form_state, $fo
  */
 function content_menu_item_delete_form_submit($form, &$form_state) {
   // Call default submit handler to handle deletion of menu item itself.
-  menu_item_delete_form_submit($form, &$form_state);
+  menu_item_delete_form_submit($form, $form_state);
 
   // Delete an associated node as well, if intended and user is permitted.
   if ($form_state['input']['delete_node'] == 1) {
@@ -300,7 +298,7 @@ function content_menu_form_menu_position_add_rule_form_alter(&$form, &$form_stat
 function content_menu_form_menu_overview_form_alter(&$form, &$form_state, $form_id) {
   if (content_menu_is_menu_considered($form['#menu']['menu_name'])) {
     module_load_include('inc', 'content_menu', 'content_menu.menu_admin');
-    _content_menu_form_menu_overview_form_alter(&$form, &$form_state, $form_id);
+    _content_menu_form_menu_overview_form_alter($form, $form_state, $form_id);
   }
 }
 
@@ -342,7 +340,27 @@ function content_menu_preprocess_views_view_field(&$vars) {
 }
 
 
+/**
+ * Implementation of hook_menu_item_target_types_alter().
+ *
+ * Extend the target types for a new menu item provided by default.
+ * See content_menu.api.php for further documentation.
+ */
+function content_menu_menu_item_target_types_alter(&$target_types, &$context) {
+  module_load_include('inc', 'content_menu', 'content_menu.menu_admin');
+  _content_menu_menu_item_target_types_alter($target_types, $context);
+}
 
+
+/**
+ * Alter a menu item's form element in the menu item administration.
+ *
+ * @param $el Array The form element of the menu item to alter.
+ */
+function content_menu_menu_item_element_alter(&$el) {
+  module_load_include('inc', 'content_menu', 'content_menu.menu_admin');
+  _content_menu_menu_item_element_alter($el);
+}
 
 
 

@@ -39,120 +39,22 @@ function _content_menu_menu_overview_page_extended() {
 function _content_menu_form_menu_overview_form_alter(&$form, &$form_state, $form_id) {
   $form['#theme'][0] = 'menu_overview_form_extended';
   // ToDo: Clean up and untangle operations-changing and target_content setting.
-  // ToDo: Refactor to be flexible and extensible by introducing a hook.
+
   // Adjust operations for each item.
   foreach (element_children($form) as $mlid) {
     $el = &$form[$mlid];
-    $el_item = &$el['#item'];
-
-    $titleedit_flag = TRUE;
+    $el['#inline_edit_title'] = TRUE;
     if (isset($form[$mlid]['operations'])) {
-      $el_ops = &$form[$mlid]['operations'];
-      $target_content = '';
 
-      //$router_path = $el_item['router_path'];
-      $link_path = ($el_item['link_path'] == '<front>') ? variable_get('site_frontpage', 'node') : $el_item['link_path'];
-      $link_path = (array) explode('/', $link_path);
-      $link_path = array_pad($link_path, 2, '');
-
-      // Change "edit" operation.
-      if (isset($el_ops['edit']) && ($el_ops['edit']['#type'] == 'link')) {
-        // Add "configure" operation by cloning "edit" operation.
-        $el_ops['configure'] = $el_ops['edit'];
-        $el_ops['configure']['#title'] = t('Configure item');
-
-        // Change "edit" operation to ...
-
-        // ... do nothing for menu item dummies.
-        if ($link_path[0] == 'menu-dummy') {
-          $target_content = t('Dummy');
-        }
-        // ... lead to node edit form for node-url-items.
-        else if (($link_path[0] == 'node') && (is_numeric($link_path[1]))) {
-          $node = node_load($link_path[1]);
-          if (is_object($node)) {
-            if (node_access('update', $node)) {
-              $el_ops['edit']['#href'] = 'node/' . $link_path[1] . '/edit';
-              $node_type = node_type_get_type($node);
-            }
-            $target_content = t($node_type->name);
-          }
-        }
-        // ... lead to panel page edit form for panel paged.
-        else if (($el_item['page_callback'] == 'page_manager_page_execute')) {
-          if (user_access('use page manager')) {
-            $page_arguments = unserialize($el_item['page_arguments']);
-            $el_ops['edit']['#href'] = 'admin/structure/pages/edit/page-' . implode('/', $page_arguments);
-          }
-          $target_content = t('Panel');
-        }
-        // ... lead to view edit form for views.
-        else if ($el_item['page_callback'] == 'views_page') {
-          if (user_access('administer views')) {
-            $page_arguments = unserialize($el_item['page_arguments']);
-            $el_ops['edit']['#href'] = 'admin/structure/views/view/' . $page_arguments[0] . '/edit/' . $page_arguments[1];
-          }
-          $target_content = t('View');
-        }
-        // ... menu position rule.
-        else if ($link_path[0] == 'menu-position') {
-          if (!user_access('administer menu positions')) {
-            $el_ops['configure'] = $el_ops['edit'] = array();
-          }
-          $target_content = t('Menu rule');
-          $titleedit_flag = FALSE;
-        }
-        else {
-          // If no other content or target is identifier, assume generic URL.
-          if (url_is_external($el_item['link_path'])) {
-            $target_content = t('URL'); // external
-          }
-          else {
-            $target_content = t('Path'); // internal
-          }
-        }
-
-        // Delete the "edit" operation alltogether if its url didn't change.
-        if (isset($el_ops['edit']['#href'])) {
-          if ($el_ops['edit']['#href'] == $el_ops['configure']['#href']) {
-            $el_ops['edit'] = array();
-          }
-          else {
-            $el_ops['edit']['#title'] = t('Edit content');
-            $el_ops['edit']['#options']['query']['destination'] = current_path();
-          }
-        }
-      }
-      else { //        if (!isset($el_ops['edit']))
-        $el_ops['edit'] = array();
-      }
-
-
-      $el['target_content'] = array('#type' => 'markup', '#markup' => $target_content);
-
-      // Push "delete" operation to end of ops list.
-      if (isset($el_ops['delete'])) {
-        $operation_delete = $el_ops['delete'];
-        unset($el_ops['delete']);
-        $el_ops['delete'] = $operation_delete;
-      }
-
-      // Add "delete" operation for menu_position items.
-      if (!isset($el_ops['delete']) && ($link_path[0] == 'menu-position') && (is_numeric($link_path[1]) && user_access('administer menu positions'))) {
-        $el_ops['delete'] = array(
-          '#type' => 'link',
-          '#title' => t('delete'),
-          '#href' => 'admin/structure/menu-position/delete/' . intval($link_path[1]),
-          '#options' => array('query' => array('destination' => current_path())),
-        );
-      }
+      // Invoke hook to let modules provide target operations for new item.
+      drupal_alter('menu_item_element', $el);
 
       // Wrap link-type operations into CTools dropbutton, if available.
-      if (module_exists('ctools')) {
+      if (module_exists('ctools') && isset($el['operations'])) {
         // Split up operation in dropbutton-ops and other ops.
         $other_operations  = array();
         $dropbutton_operations = array();
-        foreach($el_ops as $op_key => $op_item) {
+        foreach($form[$mlid]['operations'] as $op_key => $op_item) {
           if (is_array($op_item) && isset($op_item['#type'])) {
             if ($op_item['#type'] == 'link') {
               $dropbutton_operations[$op_key] = array(
@@ -170,21 +72,23 @@ function _content_menu_form_menu_overview_form_alter(&$form, &$form_state, $form
         }
 
         // Compose operation from dropbutton and other ops.
-        $el_ops = array();
-        $el_ops['dropbutton_operations'] = array(
+        $el['operations'] = array();
+        $el['operations']['dropbutton_operations'] = array(
           '#theme' => 'links__ctools_dropbutton',
           '#links' => $dropbutton_operations,
         );
-        $el_ops += $other_operations;
+        $el['operations'] += $other_operations;
       }
 
+
       // Count operations of this item.
-      $el['#operations_count'] = count($el_ops);
+      $el['#operations_count'] = count($form[$mlid]['operations']);
     }
 
-    if ($titleedit_flag && isset($el['title'])) {
+    // Add inline-editing for menu item title.
+    if ($el['#inline_edit_title'] && isset($el['title'])) {
       // ToDo: Check title inplace-edit for multilanguage compatibility issues.
-      $title = $el_item['title'];
+      $title = $el['#item']['title'];
       $el['title'] = array(
         '#type' => 'textfield',
         '#default_value' => $title,
@@ -195,6 +99,7 @@ function _content_menu_form_menu_overview_form_alter(&$form, &$form_state, $form
       );
       $form['#attached']['js'] = array(drupal_get_path('module', 'content_menu') . '/content_menu.js');
     }
+
   }
 
   // Add "add item" item/row/elements.
@@ -214,6 +119,124 @@ function _content_menu_form_menu_overview_form_alter(&$form, &$form_state, $form
     );
   }
   $form['actions']['submit']['#value'] = t('Save');
+}
+
+
+/**
+ * Menu item element alterations provided by default by this module.
+ *
+ * This helper function is called by this module's hook_menu_item_element_alter
+ * implementation content_menu_menu_item_element_alter().
+ *
+ * @param $el Array The form element of the menu item to alter.
+ */
+function _content_menu_menu_item_element_alter(&$el)  {
+  $el_item = &$el['#item'];
+  $el_ops = &$el['operations'];
+  $target_content = '';
+
+  //$router_path = $el_item['router_path'];
+  $link_path = ($el_item['link_path'] == '<front>') ? variable_get('site_frontpage', 'node') : $el_item['link_path'];
+  $link_path = (array) explode('/', $link_path);
+  $link_path = array_pad($link_path, 2, '');
+
+  // Change "edit" operation.
+  if (isset($el_ops['edit']) && ($el_ops['edit']['#type'] == 'link')) {
+    // Add "configure" operation by cloning "edit" operation.
+    $el_ops['configure'] = $el_ops['edit'];
+    $el_ops['configure']['#title'] = t('Configure item');
+
+    // Change "edit" operation to ...
+
+    // ... do nothing for menu item dummies.
+    if ($link_path[0] == 'menu-dummy') {
+      $target_content = t('Dummy');
+    }
+    // ... lead to node edit form for node-url-items.
+    else if (($link_path[0] == 'node') && (is_numeric($link_path[1]))) {
+      $node = node_load($link_path[1]);
+      if (is_object($node)) {
+        if (node_access('update', $node)) {
+          $el_ops['edit']['#href'] = 'node/' . $link_path[1] . '/edit';
+        }
+        $node_type = node_type_get_type($node);
+        $target_content = t($node_type->name);
+        // mark unpublished nodes
+        if (!$node->status) {
+          $target_content = '<span class="menu-item-content-target-unpublished">' . $target_content . '</span>';
+        }
+      }
+    }
+    // ... lead to panel page edit form for panel paged.
+    else if (($el_item['page_callback'] == 'page_manager_page_execute')) {
+      if (user_access('use page manager')) {
+        $page_arguments = unserialize($el_item['page_arguments']);
+        $el_ops['edit']['#href'] = 'admin/structure/pages/edit/page-' . implode('/', $page_arguments);
+      }
+      $target_content = t('Panel');
+    }
+    // ... lead to view edit form for views.
+    else if ($el_item['page_callback'] == 'views_page') {
+      if (user_access('administer views')) {
+        $page_arguments = unserialize($el_item['page_arguments']);
+        $el_ops['edit']['#href'] = 'admin/structure/views/view/' . $page_arguments[0] . '/edit/' . $page_arguments[1];
+      }
+      $target_content = t('View');
+    }
+    // ... menu position rule.
+    else if ($link_path[0] == 'menu-position') {
+      if (!user_access('administer menu positions')) {
+        $el_ops['configure'] = $el_ops['edit'] = array();
+      }
+      $target_content = t('Menu rule');
+      $el['#inline_edit_title'] = FALSE;
+    }
+    else {
+      // If no other content or target is identifier, assume generic URL.
+      if (url_is_external($el_item['link_path'])) {
+        $target_content = t('URL'); // external
+      }
+      else {
+        $target_content = t('Path'); // internal
+      }
+    }
+
+    // Delete the "edit" operation alltogether if its url didn't change.
+    if (isset($el_ops['edit']['#href'])) {
+      if ($el_ops['edit']['#href'] == $el_ops['configure']['#href']) {
+        $el_ops['edit'] = array();
+      }
+      else {
+        $el_ops['edit']['#title'] = t('Edit content');
+        $el_ops['edit']['#options']['query']['destination'] = current_path();
+      }
+    }
+  }
+  else { //        if (!isset($el_ops['edit']))
+    $el_ops['edit'] = array();
+  }
+
+
+  $el['target_content'] = array('#type' => 'markup', '#markup' => $target_content);
+
+
+  // Push "delete" operation to end of ops list.
+  if (isset($el_ops['delete'])) {
+    $operation_delete = $el_ops['delete'];
+    unset($el_ops['delete']);
+    $el_ops['delete'] = $operation_delete;
+  }
+
+  // Add "delete" operation for menu_position items.
+  if (!isset($el_ops['delete']) && ($link_path[0] == 'menu-position') && (is_numeric($link_path[1]) && user_access('administer menu positions'))) {
+    $el_ops['delete'] = array(
+      '#type' => 'link',
+      '#title' => t('delete'),
+      '#href' => 'admin/structure/menu-position/delete/' . intval($link_path[1]),
+      '#options' => array('query' => array('destination' => current_path())),
+    );
+  }
+
 }
 
 
@@ -261,17 +284,18 @@ function content_menu_form_menu_overview_form_alter_additem(&$form) {
     ),
   );
 
+  $target_types = content_menu_get_target_types($form['#menu']['menu_name']);
+
   // Retrieve possible add-"type"-operations for "Add link" item.
-  $operations = content_menu_get_additem_operations($form['#menu']['menu_name']);
-  foreach($operations as $op_key => $op_info) {
-    $operations[$op_key] = $op_info['label'];
+  foreach($target_types as $op_key => $op_info) {
+    $target_types[$op_key] = $op_info['label'];
   }
 
   // Build "type" select for "Add link" item.
   $form['additem']['target_content'] = array(
     '#type'      => 'select',
     '#title'     => '&nbsp;',
-    '#options'   => $operations,
+    '#options'   => $target_types,
     '#default_value' => variable_get('content_menu_default_add_operation', 'url'),
   );
 }
@@ -380,7 +404,7 @@ function content_menu_menu_overview_form_submit_extended($form, &$form_state) {
   }
 
   // Do standard menu.module's item processing.
-  menu_overview_form_submit($form, &$form_state);
+  menu_overview_form_submit($form, $form_state);
 
 
   //
@@ -404,7 +428,7 @@ function content_menu_menu_overview_form_submit_extended($form, &$form_state) {
 //    $item['msg_buffer'] = $msg_buffer;
 
     // Determine operation details.
-    $operations = content_menu_get_additem_operations($item['name']);
+    $operations = content_menu_get_target_types($item['name']);
     $op = $operations[$item['target_content']];
 
     // Prepare arguments for handler callback function.
@@ -507,33 +531,64 @@ function content_menu_assemble_query_string($item) {
 
 /**
  * Retrieve all supported menu add item operations.
- *
- * ToDo: Refactor to be flexible and extensible by introducing a hook.
  */
-function content_menu_get_additem_operations($menu_name) {
-  $operations['url'] = array('label' => t('URL'), 'handler' => 'content_menu_menu_form_handler_url', 'clean_menu_save_message' => TRUE);
-  $operations['dummy']    = array('label' => t('Dummy'), 'handler' => 'content_menu_menu_form_handler_dummy', 'clean_menu_save_message' => FALSE);
+function content_menu_get_target_types($menu_name) {
+  // Invoke hook to let modules provide target operations for new item.
+  $target_types = array();
+  $context = array('menu_name' => $menu_name);
+  drupal_alter('menu_item_target_types', $target_types, $context);
+  return $target_types;
+}
+
+
+/**
+ * Actual implementation for content_menu_menu_item_target_types_alter().
+ *
+ * Extend the target types for a new menu item provided by default.
+ * See content_menu.api.php for further documentation.
+ */
+function _content_menu_menu_item_target_types_alter(&$target_types, &$context) {
+  $target_types['url'] = array(
+    'label' => t('URL'),
+    'handler' => 'content_menu_menu_form_handler_url',
+    'clean_menu_save_message' => TRUE
+  );
+
+  $target_types['dummy'] = array(
+    'label' => t('Dummy'),
+    'handler' => 'content_menu_menu_form_handler_dummy',
+    'clean_menu_save_message' => FALSE
+  );
+
   foreach(node_type_get_types() as $node_type) {
     if (user_access('create ' . $node_type->type . ' content')) {
       $node_menu_options = variable_get('menu_options_' . $node_type->type, array());
-      if (in_array($menu_name, $node_menu_options)) {
-        $operations['node_' . $node_type->type] = array(
+      if (in_array($context['menu_name'], $node_menu_options)) {
+
+        $target_types['node_' . $node_type->type] = array(
           'label' => t('New @type', array('@type' => t($node_type->name))),
           'handler' => 'content_menu_menu_form_handler_node',
           'arguments' => array('type' => $node_type->type),
           'clean_menu_save_message' => TRUE,
         );
+
       }
     }
   }
-  $operations['existing'] = array(
+
+  $target_types['existing'] = array(
     'label' => t('Existing content'),
     'handler' => 'content_menu_menu_form_handler_menu_position_existing',
     'clean_menu_save_message' => TRUE,
   );
-  if (module_exists('menu_position') && user_access('administer menu positions')) {
-    $operations['menu_position_rule'] = array('label' => t('Menu position rule'), 'handler' => 'content_menu_menu_form_handler_menu_position_rule', 'clean_menu_save_message' => TRUE);
-  }
 
-  return $operations;
+  if (module_exists('menu_position') && user_access('administer menu positions')) {
+    $target_types['menu_position_rule'] = array(
+      'label' => t('Menu position rule'),
+      'handler' => 'content_menu_menu_form_handler_menu_position_rule',
+      'clean_menu_save_message' => TRUE,
+    );
+  }
 }
+
+
