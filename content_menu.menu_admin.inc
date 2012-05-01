@@ -457,7 +457,7 @@ function content_menu_menu_overview_form_submit_extended($form, &$form_state) {
 /**
  * Menu add item operation handler for a new dummy menu item.
  */
-function content_menu_menu_form_handler_dummy(&$form, &$form_state, &$item) {
+function content_menu_menu_form_handler_dummy($form, $form_state, $item) {
   drupal_set_message(t('A new menu item has been created.'));
   $item['link_path'] = 'menu-dummy';
   content_menu_link_save($item);
@@ -467,7 +467,7 @@ function content_menu_menu_form_handler_dummy(&$form, &$form_state, &$item) {
 /**
  * Menu add item operation handler for a new node menu item.
  */
-function content_menu_menu_form_handler_node(&$form, &$form_state, &$item, $type) {
+function content_menu_menu_form_handler_node($form, $form_state, $item, $type) {
   drupal_set_message(t('You`re about to create a new menu item with a new content.'));
   drupal_set_message(t('Complete the process by filling out and saving the form below.'));
   drupal_goto('node/add/' . $type, array('query' => content_menu_assemble_query_string($item)));
@@ -477,7 +477,7 @@ function content_menu_menu_form_handler_node(&$form, &$form_state, &$item, $type
 /**
  * Menu add item operation handler for a new generic menu item.
  */
-function content_menu_menu_form_handler_url(&$form, &$form_state, &$item) {
+function content_menu_menu_form_handler_url($form, $form_state, $item) {
   drupal_set_message(t('You`re about to create a new generic menu item linking to a URL path.'));
   drupal_set_message(t('Complete the process by filling out and saving the form below.'));
   drupal_goto('admin/structure/menu/manage/main-menu/add', array('query' => content_menu_assemble_query_string($item)));
@@ -487,7 +487,7 @@ function content_menu_menu_form_handler_url(&$form, &$form_state, &$item) {
 /**
  * Menu add item operation handler for a new generic menu item.
  */
-function content_menu_menu_form_handler_menu_position_rule(&$form, &$form_state, &$item) {
+function content_menu_menu_form_handler_menu_position_rule($form, $form_state, $item) {
   drupal_set_message(t('You`re about to create a new generic menu position rule.'));
   drupal_set_message(t('Complete the process by filling out and saving the form below.'));
   drupal_goto('admin/structure/menu-position/add', array('query' => content_menu_assemble_query_string($item)));
@@ -497,7 +497,7 @@ function content_menu_menu_form_handler_menu_position_rule(&$form, &$form_state,
 /**
  * Menu add item operation handler for a new menu item to existing content.
  */
-function content_menu_menu_form_handler_menu_position_existing(&$form, &$form_state, &$item) {
+function content_menu_menu_form_handler_menu_position_existing($form, $form_state, $item) {
   $url = content_menu_variable_get_add_existing_content_url();
   // If using default view, ensure to only goto view page if views is enabled.
   if (($url == CONTENT_MENU_ADD_EXISTING_CONTENT_URL) && !module_exists('views')) {
