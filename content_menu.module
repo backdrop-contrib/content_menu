@@ -6,6 +6,12 @@
  * ToDo: Use view query alter hook to mandatorily filter existing-node-selection
  *       by only those node types that can have a menu item in the resp. menu.
  * ToDo: Mark menu items in item listing that are linked to unpublished content.
+ *       NOTE: menu links to unpublished nodes are suppressed by Drupal.
+ *       => Option 1: Alter Drupal's behavior to show unpublished links, too,
+ *                    and then mark them as unpublished (new permission).
+ *       => Options 2: Leave everything as is.
+ * ToDo: Use menu.module's variable 'menu_override_parent_selector' to provide
+ *       custom more scalable menu parent selector.
  *
  */
 
