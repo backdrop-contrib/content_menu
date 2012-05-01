@@ -562,7 +562,7 @@ function _content_menu_menu_item_target_types_alter(&$target_types, &$context) {
 
   foreach(node_type_get_types() as $node_type) {
     if (user_access('create ' . $node_type->type . ' content')) {
-      $node_menu_options = variable_get('menu_options_' . $node_type->type, array());
+      $node_menu_options = variable_get('menu_options_' . $node_type->type, array('main-menu' => 'main-menu'));
       if (in_array($context['menu_name'], $node_menu_options)) {
 
         $target_types['node_' . $node_type->type] = array(
