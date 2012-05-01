@@ -387,28 +387,30 @@ function content_menu_menu_item_element_alter(&$el) {
  */
 function content_menu_form_alter(&$form, &$form_state, $form_id) {
   if (isset($form['#node_edit_form'])) {
-    // Hide description field from menu item fieldset.
-    $form['menu']['link']['description']['#access'] = FALSE;
-
-    // Pre-Populate menu item fields, if given via querystring.
-    if (isset($_GET['menu_title'])) {
-      $menu_item = content_menu_get_menu_item_form_querystring();
-
-      // Set node form's menu item input field according to query string input.
-      $form['menu']['enabled']['#default_value'] = 1;
-      $form['menu']['link']['hidden']['#value'] = $menu_item['hidden'];
-      $form['menu']['link']['link_title']['#default_value'] = $menu_item['title'];
-      $form['menu']['link']['parent']['#default_value'] = $menu_item['name'] . ':' . $menu_item['plid'];
-      $form['menu']['link']['weight']['#default_value'] = $menu_item['weight'];
-
-      $form['title']['#default_value'] = $form['title_field']['und']['0']['value']['#default_value'] = $menu_item['title'];
-    }
-
     // Add link to menu overview / admin form to menu fieldset.
     if (user_access('administer menu')) {
       if ($form['#node_edit_form'] && isset($form['menu'])) {
         $menu_name = reset(explode(':', $form['menu']['link']['parent']['#default_value']));
         $form['menu']['link']['menu_admin_link'] = array('#type' => 'markup', '#markup' => l(t('Manage menu structure') . ' …', 'admin/structure/menu/manage/' . $menu_name, array('attributes' => array('target' => '_blank'))));
+      }
+    }
+
+    if (isset($form['menu'])) {
+      // Hide description field from menu item fieldset.
+      $form['menu']['link']['description']['#access'] = FALSE;
+
+      // Pre-Populate menu item fields, if given via querystring.
+      if (isset($_GET['menu_title'])) {
+        $menu_item = content_menu_get_menu_item_form_querystring();
+
+        // Set node form's menu item input field according to query string input.
+        $form['menu']['enabled']['#default_value'] = 1;
+        $form['menu']['link']['hidden']['#value'] = $menu_item['hidden'];
+        $form['menu']['link']['link_title']['#default_value'] = $menu_item['title'];
+        $form['menu']['link']['parent']['#default_value'] = $menu_item['name'] . ':' . $menu_item['plid'];
+        $form['menu']['link']['weight']['#default_value'] = $menu_item['weight'];
+
+        $form['title']['#default_value'] = $form['title_field']['und']['0']['value']['#default_value'] = $menu_item['title'];
       }
     }
   }
