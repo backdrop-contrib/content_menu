@@ -209,7 +209,7 @@ function content_menu_form_menu_edit_item_alter(&$form, &$form_state, $form_id) 
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
     '#weight' => 100,
-    '#title' => t('Advenced menu item settings'),
+    '#title' => t('Advanced menu item settings'),
   );
   $advanced_elements = array('description', 'expanded', 'parent', 'weight');
   foreach($advanced_elements as $el_key) {
