@@ -10,6 +10,7 @@
  */
 
 DEFINE('CONTENT_MENU_ADD_EXISTING_CONTENT_URL', 'admin/structure/menu/manage/add_existing_content');
+DEFINE('CONTENT_MENU_ALTER_ALL_MENUS', FALSE);
 
 
 /**
@@ -296,7 +297,7 @@ function content_menu_form_menu_position_add_rule_form_alter(&$form, &$form_stat
  * Overhaul the menu_overview_form to improve menu authoring experience.
  */
 function content_menu_form_menu_overview_form_alter(&$form, &$form_state, $form_id) {
-  if (content_menu_is_menu_considered($form['#menu']['menu_name'])) {
+  if (variable_get('content_menu_alter_all_menus', CONTENT_MENU_ALTER_ALL_MENUS) || content_menu_is_menu_considered($form['#menu']['menu_name'])) {
     module_load_include('inc', 'content_menu', 'content_menu.menu_admin');
     _content_menu_form_menu_overview_form_alter($form, $form_state, $form_id);
   }
@@ -311,9 +312,11 @@ function content_menu_form_menu_overview_form_alter(&$form, &$form_state, $form_
  */
 function content_menu_menu_local_tasks_alter(&$data, $router_item, $root_path) {
   if (strpos(current_path(), 'admin/structure/menu/manage/') === 0) {
-    foreach($data['actions']['output'] as $key => $action) {
-      if ($action['#link']['path'] == 'admin/structure/menu/manage/%/add') {
-        unset($data['actions']['output'][$key]);
+    if (variable_get('content_menu_alter_all_menus', CONTENT_MENU_ALTER_ALL_MENUS) || content_menu_is_menu_considered(arg(4))) {
+      foreach($data['actions']['output'] as $key => $action) {
+        if ($action['#link']['path'] == 'admin/structure/menu/manage/%/add') {
+          unset($data['actions']['output'][$key]);
+        }
       }
     }
   }
@@ -434,7 +437,7 @@ function content_menu_get_menu_item_form_querystring() {
  * Check if a given menu (name) applies for being considered by this module.
  */
 function content_menu_is_menu_considered($menu_name) {
-  $exclude_menus = array('management', 'user-menu', 'navigation', 'devel');
+  $exclude_menus = variable_get('content_menu_special_menus', array('management', 'user-menu', 'navigation', 'devel'));
   return !in_array($menu_name, $exclude_menus);
 }
 
