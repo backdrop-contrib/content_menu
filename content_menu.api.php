@@ -2,7 +2,18 @@
 
 /**
  *
- * Variables of this module that can be changed:
+ * PERMISSIONS introduced by this module:
+ *
+ * administer system menus
+ *   Allows a user to show/list _all_ menus on the menu overview admin page.
+ *   Users without this permission are not shown the content_menu_special_menus
+ *   (variable details see below).
+ *
+ *
+ *
+ * SYSTEM VARIABLES of this module that can be changed:
+ * (There's currently no config interface to set them, but you can do that
+ *  manually or programmatically)
  *
  * content_menu_add_existing_content_url
  *   URL of the "select existing content" page to use when creating a new menu
@@ -13,6 +24,19 @@
  *   when creating a new menu item that is linking to "existing content".
  *   An "nid" field of this field based view[/display] is changed to be used as
  *   "select" link to select existing content for the new menu item to link to.
+ *
+ * content_menu_special_menus
+ *   Array of menu machine names that are considered special/system menus, and
+ *   are hence not altered by content_menu, and not shown to users without the
+ *   new 'administer system menus' permission.
+ *   Default: array('management', 'user-menu', 'navigation', 'devel'));
+ *
+ * content_menu_alter_all_menus
+ *   Boolean flag to state whether all menus should be altered to have to
+ *   improved interface, including those listed in the variable
+ *   content_menu_special_menus.
+ *   Default: FALSE (to let system menus be untouched, 'just in case').
+ *
  *
  */
 
