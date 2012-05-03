@@ -95,7 +95,7 @@ function _content_menu_form_menu_overview_form_alter(&$form, &$form_state, $form
         '#size' => 30,
         '#maxlength' => 255,
         '#prefix' => '<span class="menu-overview-title-link">' . $el['title']['#markup'] . '</span>',
-        '#suffix' => '<a href="javascript:void();" title="Click to edit title" class="menu-overview-title-edit-trigger"></a>'
+        '#suffix' => '<a href="javascript:void();" title="Click to edit title" class="menu-overview-title-edit-trigger">' . t('edit title') . '</a>',
       );
       $form['#attached']['js'] = array(drupal_get_path('module', 'content_menu') . '/content_menu.js');
     }

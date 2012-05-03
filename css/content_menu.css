@@ -2,37 +2,16 @@
 
 .menu-overview-title-edit-trigger
 {
-  display: inline-block;
-  width: 8px;
-  height: 14px;
-  line-height: 14px;
-  background: url('./icon_edit_14_2.png');
-  /* pencil icon from http://lightglitch.github.com/bootstrap-xtra/ */
   margin-left: 8px;
-  overflow: hidden;
+  display: none;
 }
 
 tr:hover .menu-overview-title-edit-trigger {
-  background-position:14px 0px;
-}
-
-tr:hover .menu-overview-title-link {
-  text-decoration: underline;
+  display: inline;
 }
 
 #menu-overview-form table.sticky-header {
   z-index: 1;
-}
-
-.menu-overview-title-edit-trigger {
-  color: #888;
-  padding-left: 0.5em;
-  cursor:text;
-}
-.menu-overview-title-edit-trigger:hover {
-  text-decoration: none;
-  color: red;
-  font-weight: bold;
 }
 
 .menu-enabled .form-type-textfield,

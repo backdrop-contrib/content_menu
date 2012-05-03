@@ -16,7 +16,7 @@
  *       custom more scalable menu parent selector.
  *
  * ToDo: Pre-placement of new menu items is sometimes slightly misplaced.
- * 
+ *
  */
 
 DEFINE('CONTENT_MENU_ADD_EXISTING_CONTENT_URL', 'admin/structure/menu/manage/add_existing_content');
