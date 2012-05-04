@@ -366,6 +366,13 @@ function theme_menu_overview_form_extended($variables) {
 
       $row = array_merge(array('data' => $row), $element['#attributes']);
       $row['class'][] = 'draggable';
+      // Highlight row if menu item has been created within the last minute.
+      if (isset($element['#item']['mlid']) && isset($_SESSION['content_menu_inserted_links'][$element['#item']['mlid']])) {
+        if ((time() - $_SESSION['content_menu_inserted_links'][$element['#item']['mlid']]['created']) <= 60) {
+          $row['class'][] = 'highlighted';
+        }
+        unset($_SESSION['content_menu_inserted_links'][$element['#item']['mlid']]);
+      }
       $rows[] = $row;
     }
   }
