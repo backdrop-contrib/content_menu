@@ -49,6 +49,12 @@ function _content_menu_form_menu_overview_form_alter(&$form, &$form_state, $form
       // Invoke hook to let modules provide target operations for new item.
       drupal_alter('menu_item_element', $el);
 
+      // Make sure that operations are ordered by their weight, then unset it.
+      uasort($el['operations'], 'drupal_sort_weight');
+      foreach($el['operations'] as $el_op_key => $el_op) {
+        unset($el['operations'][$el_op_key]['weight']);
+      }
+
       // Wrap link-type operations into CTools dropbutton, if available.
       if (module_exists('ctools') && isset($el['operations'])) {
         // Split up operation in dropbutton-ops and other ops.
@@ -142,9 +148,27 @@ function _content_menu_menu_item_element_alter(&$el)  {
 
   // Change "edit" operation.
   if (isset($el_ops['edit']) && ($el_ops['edit']['#type'] == 'link')) {
+
+    $el_ops['edit']['weight'] = 1;
+
+    // Add "select content" operation.
+    $selectcontenturl = content_menu_variable_get_add_existing_content_url();
+    if ($selectcontenturl) {
+      $el_ops['selectcontent'] = array(
+        '#type' => 'link',
+        'weight' => 2,
+        '#title' => t('select content'),
+        '#href' => $selectcontenturl,
+        '#options' => array(
+          'query' => content_menu_assemble_query_string($el_item),
+        ),
+      );
+    }
+
     // Add "configure" operation by cloning "edit" operation.
     $el_ops['configure'] = $el_ops['edit'];
-    $el_ops['configure']['#title'] = t('Configure item');
+    $el_ops['configure']['#title'] = t('configure item');
+    $el_ops['configure']['weight'] = 3;
 
     // Change "edit" operation to ...
 
@@ -201,30 +225,20 @@ function _content_menu_menu_item_element_alter(&$el)  {
       }
     }
 
-    // Delete the "edit" operation alltogether if its url didn't change.
+    // Delete the "edit" operation altogether if its url didn't change.
     if (isset($el_ops['edit']['#href'])) {
       if ($el_ops['edit']['#href'] == $el_ops['configure']['#href']) {
         $el_ops['edit'] = array();
+        $el_ops['selectcontent']['weight'] = 4;
       }
       else {
-        $el_ops['edit']['#title'] = t('Edit content');
+        $el_ops['edit']['#title'] = t('edit content');
         $el_ops['edit']['#options']['query']['destination'] = current_path();
       }
     }
   }
   else { //        if (!isset($el_ops['edit']))
     $el_ops['edit'] = array();
-  }
-
-
-  $el['target_content'] = array('#type' => 'markup', '#markup' => $target_content);
-
-
-  // Push "delete" operation to end of ops list.
-  if (isset($el_ops['delete'])) {
-    $operation_delete = $el_ops['delete'];
-    unset($el_ops['delete']);
-    $el_ops['delete'] = $operation_delete;
   }
 
   // Add "delete" operation for menu_position items.
@@ -236,6 +250,14 @@ function _content_menu_menu_item_element_alter(&$el)  {
       '#options' => array('query' => array('destination' => current_path())),
     );
   }
+
+  // Push "delete" operation to end of ops list.
+  if (isset($el_ops['delete'])) {
+    $el_ops['delete']['#title'] = t('delete item');
+    $el_ops['delete']['weight'] = 100;
+  }
+
+  $el['target_content'] = array('#type' => 'markup', '#markup' => $target_content);
 
 }
 
@@ -523,7 +545,11 @@ function content_menu_menu_form_handler_menu_position_existing($form, $form_stat
  * Assembles a query string with menu item data.
  */
 function content_menu_assemble_query_string($item) {
+  if (empty($item['name']) && isset($item['menu_name'])) {
+    $item['name'] = $item['menu_name'];
+  }
   $query = array(
+    'menu_mlid'   => isset($item['mlid']) ? $item['mlid'] : NULL,
     'menu_title'  => $item['title'],
     'menu_plid'   => $item['plid'],
     'menu_name'   => $item['name'],
