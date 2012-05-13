@@ -508,7 +508,7 @@ function content_menu_menu_form_handler_menu_position_rule($form, $form_state, $
 function content_menu_menu_form_handler_menu_position_existing($form, $form_state, $item) {
   $url = content_menu_variable_get_add_existing_content_url();
   // If using default view, ensure to only goto view page if views is enabled.
-  if (($url == CONTENT_MENU_ADD_EXISTING_CONTENT_URL) && !module_exists('views')) {
+  if (empty($url)) {
     content_menu_menu_form_handler_url($form, $form_state, $item);
   }
   else {

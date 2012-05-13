@@ -487,5 +487,10 @@ function content_menu_link_save($menu_item) {
  * Get config variable 'content_menu_add_existing_content_url'.
  */
 function content_menu_variable_get_add_existing_content_url() {
-  return variable_get('content_menu_add_existing_content_url', CONTENT_MENU_ADD_EXISTING_CONTENT_URL);
+  $url = variable_get('content_menu_add_existing_content_url', CONTENT_MENU_ADD_EXISTING_CONTENT_URL);
+  // If using default view, ensure to only goto view page if views is enabled.
+  if (($url == CONTENT_MENU_ADD_EXISTING_CONTENT_URL) && !module_exists('views')) {
+    $url = NULL;
+  }
+  return $url;
 }
