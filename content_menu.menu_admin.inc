@@ -488,7 +488,7 @@ function content_menu_menu_form_handler_node($form, $form_state, $item, $type) {
 function content_menu_menu_form_handler_url($form, $form_state, $item) {
   drupal_set_message(t('You`re about to create a new generic menu item linking to a URL path.'));
   drupal_set_message(t('Complete the process by filling out and saving the form below.'));
-  drupal_goto('admin/structure/menu/manage/main-menu/add', array('query' => content_menu_assemble_query_string($item)));
+  drupal_goto('admin/structure/menu/manage/' . $item['name'] . '/add', array('query' => content_menu_assemble_query_string($item)));
 }
 
 
