@@ -491,9 +491,10 @@ function content_menu_menu_form_handler_dummy($form, $form_state, $item) {
  * Menu add item operation handler for a new node menu item.
  */
 function content_menu_menu_form_handler_node($form, $form_state, $item, $type) {
-  $type = str_replace("_", "-", $type);
-  drupal_set_message(t('You`re about to create a new menu item with a new content.'));
+  $types = node_type_get_types();
+  drupal_set_message(t('You`re about to create a new menu item with new %type content.', array('%type' => $types[$type]->name)));
   drupal_set_message(t('Complete the process by filling out and saving the form below.'));
+  $type = str_replace("_", "-", $type);
   drupal_goto('node/add/' . $type, array('query' => content_menu_assemble_query_string($item)));
 }
 
