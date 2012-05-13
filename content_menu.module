@@ -21,6 +21,7 @@
 
 DEFINE('CONTENT_MENU_ADD_EXISTING_CONTENT_URL', 'admin/structure/menu/manage/add_existing_content');
 DEFINE('CONTENT_MENU_ALTER_ALL_MENUS', FALSE);
+DEFINE('CONTENT_MENU_ADD_ITEM_WEIGHT', 50);
 
 
 /**

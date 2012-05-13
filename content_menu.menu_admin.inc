@@ -280,9 +280,12 @@ function content_menu_form_menu_overview_form_alter_additem(&$form) {
     ),
     'weight' => array(
       '#type' => 'weight',
-      '#delta' => 100,
-      // 50 is the max weight in weight select dropdowns.
-      '#default_value' => '50',
+      // '#delta' has to be in sync with:
+      // a) CONTENT_MENU_ADD_ITEM_WEIGHT.
+      // b) Delta set in menu_form_node_form_alter().
+      '#delta' => 50,
+      // Real weight is set in content_menu_menu_overview_form_submit_extended.
+      '#default_value' => CONTENT_MENU_ADD_ITEM_WEIGHT,
       '#title_display' => 'invisible',
       '#title' => 'Weight',
     ),
@@ -418,11 +421,18 @@ function content_menu_menu_overview_form_submit_extended($form, &$form_state) {
   // Edit item handling.
   //
 
-  // Inject item titles, if a title changed.
+  $max_weight = 0;
+  // Step though items
   foreach (element_children($form) as $mlid) {
     $el = &$form[$mlid];
+    // Keep track of maximum weight
+    if (isset($el['#item']['weight']) && ($el['#item']['weight'] > $max_weight)) {
+      $max_weight = $el['#item']['weight'];
+    }
+    // If title changed, ...
     if (isset($el['#item']) && isset($el['title']['#value'])) {
       if ($el['title']['#value'] != $el['title']['#default_value']) {
+        // Inject item title.
         $title = $form_state['input'][$mlid]['title'];
         $el['#item']['title'] = $el['#item']['link_title'] = $title;
         // Change default value of weight field to trigger
@@ -445,10 +455,14 @@ function content_menu_menu_overview_form_submit_extended($form, &$form_state) {
   // If title has been entered for new menu item, prepare add operation.
   if (trim($item['title'] != '')) {
     // Complete data for new menu item.
+
     $item['link_title'] = $item['title'];
     $item['name'] = $form['#menu']['menu_name'];
     $item['hidden'] = $item['hidden'] ? 0 : 1;
     $item['customized'] = 1;
+    if ($item['weight'] == CONTENT_MENU_ADD_ITEM_WEIGHT) {
+      $item['weight'] = $max_weight + 1;
+    }
 
     // Determine operation details.
     $operations = content_menu_get_target_types($item['name']);
