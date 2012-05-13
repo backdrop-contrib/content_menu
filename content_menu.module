@@ -173,11 +173,27 @@ function content_menu_set_menu_admin_breadcrumb($menu_name = NULL) {
 
 /**
  * Implementation of hook_menu_link_insert.
- *
- * Remember newly created menu items to highlight them
- * on the next menu admin page view/request.
  */
 function content_menu_menu_link_insert($link) {
+  content_menu_mark_link_updated($link);
+}
+
+
+/**
+ * Implementation of hook_menu_link_update.
+ */
+function content_menu_menu_link_update($link) {
+  content_menu_mark_link_updated($link);
+}
+
+
+/**
+ * Remember newly created menu items to highlight them
+ * on the next menu admin page view/request.
+ *
+ * @param $link Array defining the link.
+ */
+function content_menu_mark_link_updated($link) {
   // Save menu links created on or right before menu admin pages to session var.
   if ((isset($_GET['destination']) && (strpos($_GET['destination'], 'admin/structure/menu/manage/') === 0))
       ||
