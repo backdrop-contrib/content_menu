@@ -423,7 +423,7 @@ function content_menu_menu_overview_form_submit_extended($form, &$form_state) {
     $el = &$form[$mlid];
     if (isset($el['#item']) && isset($el['title']['#value'])) {
       if ($el['title']['#value'] != $el['title']['#default_value']) {
-        $title = check_plain($form_state['input'][$mlid]['title']);
+        $title = $form_state['input'][$mlid]['title'];
         $el['#item']['title'] = $el['#item']['link_title'] = $title;
         // Change default value of weight field to trigger
         // menu_overview_form_submit() marking the item as updated.
@@ -442,11 +442,6 @@ function content_menu_menu_overview_form_submit_extended($form, &$form_state) {
 
   $item = $form_state['input']['additem'];
 
-  // Sanitize user input for new menu item.
-  foreach($item as $item_key => $item_value) {
-    $item[$item_key] = check_plain($item_value);
-  }
-
   // If title has been entered for new menu item, prepare add operation.
   if (trim($item['title'] != '')) {
     // Complete data for new menu item.
@@ -454,7 +449,6 @@ function content_menu_menu_overview_form_submit_extended($form, &$form_state) {
     $item['name'] = $form['#menu']['menu_name'];
     $item['hidden'] = $item['hidden'] ? 0 : 1;
     $item['customized'] = 1;
-//    $item['msg_buffer'] = $msg_buffer;
 
     // Determine operation details.
     $operations = content_menu_get_target_types($item['name']);

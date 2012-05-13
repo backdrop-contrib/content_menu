@@ -479,7 +479,7 @@ function content_menu_get_menu_item_form_querystring() {
   $menu_item = array();
   foreach($_GET as $get_key => $get_value) {
     if (substr($get_key, 0, 5) == 'menu_') {
-      $menu_item[check_plain(substr($get_key, 5))] = check_plain($get_value);
+      $menu_item[check_plain(substr($get_key, 5))] = strip_tags($get_value);
     }
   }
   return $menu_item;
