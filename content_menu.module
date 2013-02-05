@@ -245,8 +245,8 @@ function content_menu_form_menu_edit_item_alter(&$form, &$form_state, $form_id) 
 
   // Extend breadcrumb
   if ($form['mlid']['#value']) {
-    $menu_name = reset(explode(':', $form['parent']['#default_value']));
-    content_menu_set_menu_admin_breadcrumb($menu_name);
+    $menu = explode(':', $form['parent']['#default_value']);
+    content_menu_set_menu_admin_breadcrumb($menu[0]);
   }
 
   // Simplify the form, by putting all "advanced" fields in fieldset.
@@ -436,8 +436,8 @@ function content_menu_form_alter(&$form, &$form_state, $form_id) {
     // Add link to menu overview / admin form to menu fieldset.
     if (user_access('administer menu')) {
       if ($form['#node_edit_form'] && isset($form['menu'])) {
-        $menu_name = reset(explode(':', $form['menu']['link']['parent']['#default_value']));
-        $form['menu']['link']['menu_admin_link'] = array('#type' => 'markup', '#markup' => l(t('Manage menu structure') . ' …', 'admin/structure/menu/manage/' . $menu_name, array('attributes' => array('target' => '_blank'))));
+        $menu = explode(':', $form['menu']['link']['parent']['#default_value']);
+        $form['menu']['link']['menu_admin_link'] = array('#type' => 'markup', '#markup' => l(t('Manage menu structure') . ' …', 'admin/structure/menu/manage/' . $menu[0], array('attributes' => array('target' => '_blank'))));
       }
     }
 
