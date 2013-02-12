@@ -104,25 +104,8 @@ function content_menu_theme() {
  * Implements hook_views_api().
  */
 function content_menu_views_api() {
-  list($module, $api) = func_get_args();
-  if ($module == "views" && $api == "views_default") {
-    return array("version" => "3.0");
-  }
+  return array('api' => 3.0);
 }
-
-
-/**
- * Implements hook_views_default_views().
- *
- * Declare default view for selecting existing content.
- */
-function content_menu_views_default_views() {
-  $export = array();
-  module_load_include('inc', 'content_menu', 'content_menu.selectionview');
-  $export['menu_existing_content_selection'] = content_menu_views_default_view_selectionview();
-  return $export;
-}
-
 
 /**
  * Implements hook_page_alter().

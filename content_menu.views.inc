@@ -1,6 +1,9 @@
 <?php
 
-function content_menu_views_default_view_selectionview() {
+/**
+ * Implements hook_views_default_views().
+ */
+function content_menu_views_default_views() {
   $view = new view;
   $view->name = 'menu_existing_content_selection';
   $view->description = '';
@@ -274,33 +277,8 @@ function content_menu_views_default_view_selectionview() {
   /* Display: Page */
   $handler = $view->new_display('page', 'Page', 'page_1');
   $handler->display->display_options['path'] = 'admin/structure/menu/manage/add_existing_content';
-  $translatables['menu_existing_content_selection'] = array(
-    t('Master'),
-    t('Select existing content'),
-    t('more'),
-    t('Apply'),
-    t('Reset'),
-    t('Sort by'),
-    t('Asc'),
-    t('Desc'),
-    t('Items per page'),
-    t('- All -'),
-    t('Offset'),
-    t('There is no content available that matches your selection criteria'),
-    t('author'),
-    t('<span class="node-selector" data-nid="[nid]">select</span>'),
-    t('node/[nid]'),
-    t('Select this content'),
-    t('&rarr;'),
-    t('Title'),
-    t('[title] [title_1]'),
-    t('Content Type'),
-    t('Author'),
-    t('Post date'),
-    t('Title contains'),
-    t('Type'),
-    t('Page'),
-  );
 
-  return $view;
+  $views[$view->name] = $view;
+
+  return $views;
 }
