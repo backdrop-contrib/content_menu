@@ -116,6 +116,8 @@ function _content_menu_form_menu_overview_form_alter(&$form, &$form_state, $form
 
   // Change submit handler function to our own implementation.
   $form['#submit'] = array('content_menu_menu_overview_form_submit_extended');
+  // Prevent 'destination' from hijacking our submit
+  unset($_GET['destination']);
 
   if (!isset($form['actions'])) {
     $form['actions'] = array('#type' => 'actions');
