@@ -127,7 +127,7 @@ function content_menu_page_alter(&$page) {
   }
 
   if (current_path() == content_menu_variable_get_add_existing_content_url()) {
-    $item = content_menu_get_menu_item_form_querystring();
+    $item = content_menu_get_menu_item_from_querystring();
     if (isset($item['mlid']) && ($item['mlid'] != 0)) {
       drupal_set_message(t('You`re about to select a new content target for menu item "%title"', array('%title' => $item['title'])));
       drupal_set_message('Complete the process by finding and selecting an existing content for this menu item.');
@@ -147,7 +147,7 @@ function content_menu_set_menu_admin_breadcrumb($menu_name = NULL) {
   $breadcrumb[] = l(t('Menus'),          'admin/structure/menu');
 
   if ($menu_name == NULL) {
-    $menu_item = content_menu_get_menu_item_form_querystring();
+    $menu_item = content_menu_get_menu_item_from_querystring();
     if (isset($menu_item['name'])) {
       $menu_name = $menu_item['name'];
     }
@@ -213,7 +213,7 @@ function content_menu_mark_link_updated($link) {
 function content_menu_form_menu_edit_item_alter(&$form, &$form_state, $form_id) {
   // Pre-populate menu item form elements with data from querystring.
   if (isset($_GET['menu_title'])) {
-    $menu_item = content_menu_get_menu_item_form_querystring();
+    $menu_item = content_menu_get_menu_item_from_querystring();
     // If even link_path is given, create item right away and go back.
     if (!empty($menu_item['link_path'])) {
       content_menu_link_save($menu_item);
@@ -319,7 +319,7 @@ function content_menu_item_delete_form_submit($form, &$form_state) {
 function content_menu_form_menu_position_add_rule_form_alter(&$form, &$form_state, $form_id) {
   // Pre-populate menu item form elements with data from querystring.
   if (isset($_GET['menu_title'])) {
-    $menu_item = content_menu_get_menu_item_form_querystring();
+    $menu_item = content_menu_get_menu_item_from_querystring();
     $form['admin_title']['#default_value'] = $menu_item['title'];
     $form['plid']['#default_value'] = $menu_item['name'] . ':' . $menu_item['plid'];
   }
@@ -370,7 +370,7 @@ function content_menu_preprocess_views_view_field(&$vars) {
   $selection_view = explode(':', variable_get('content_menu_add_existing_content_view', 'menu_existing_content_selection'));
   if (($field->field == 'nid') && ($view->name == $selection_view[0]) && ((!isset($selection_view[1]) || ($view->current_display == $selection_view[1])))) {
     module_load_include('inc', 'content_menu', 'content_menu.menu_admin');
-    $item = content_menu_get_menu_item_form_querystring();
+    $item = content_menu_get_menu_item_from_querystring();
     $item['link_path'] = 'node/' . $field->original_value;
     $url = 'admin/structure/menu/manage/' . $item['name'] . '/add';
     $vars['output'] = l(t('select'), $url, array('query' => content_menu_assemble_query_string($item)));
@@ -430,7 +430,7 @@ function content_menu_form_alter(&$form, &$form_state, $form_id) {
 
       // Pre-Populate menu item fields, if given via querystring.
       if (isset($_GET['menu_title'])) {
-        $menu_item = content_menu_get_menu_item_form_querystring();
+        $menu_item = content_menu_get_menu_item_from_querystring();
 
         // Set node form's menu item input field according to query string input.
         $form['menu']['enabled']['#default_value'] = 1;
@@ -458,7 +458,7 @@ function content_menu_form_alter(&$form, &$form_state, $form_id) {
  * Build menu item data from querystring.
  *
  */
-function content_menu_get_menu_item_form_querystring() {
+function content_menu_get_menu_item_from_querystring() {
   // Sanitize querystring input.
   $menu_item = array();
   foreach($_GET as $get_key => $get_value) {
