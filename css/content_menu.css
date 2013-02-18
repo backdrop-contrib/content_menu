@@ -17,8 +17,8 @@ tr:hover .menu-overview-title-edit-trigger {
   z-index: 1;
 }
 
-.menu-enabled .form-type-textfield,
-.menu-disabled .form-type-textfield {
+table#menu-overview .menu-enabled .form-type-textfield,
+table#menu-overview .menu-disabled .form-type-textfield {
   display: inline;
   display: none;
 }
