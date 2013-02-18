@@ -142,8 +142,8 @@ function content_menu_page_alter(&$page) {
   if (current_path() == content_menu_variable_get_add_existing_content_url()) {
     $item = content_menu_get_menu_item_from_querystring();
     if (isset($item['mlid']) && ($item['mlid'] != 0)) {
-      drupal_set_message(t('You`re about to select a new content target for menu item "%title"', array('%title' => $item['title'])));
-      drupal_set_message('Complete the process by finding and selecting an existing content for this menu item.');
+      drupal_set_message(t('You`re about to select a new content target for menu item "%title".', array('%title' => $item['title'])));
+      drupal_set_message(t('Now you can select an existing content item for menu item "%title".', array('%title' => $item['title'])));
     }
   }
 }
