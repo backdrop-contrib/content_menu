@@ -421,6 +421,20 @@ function content_menu_menu_item_element_alter(&$el) {
 //
 //
 
+ /**
+ * Implementation of hook_node_insert().
+ *
+ * After creating a new node, if it's being created to replace a menu-dummy, perform the replacement.
+ */
+function content_menu_node_insert($node) {
+  // Ensure that this node is replacing a menu dummy.
+  if (isset($_GET['menu_link_path']) && $_GET['menu_link_path'] == 'menu-dummy') {
+    // Update the dummy that is being replaced by this node.
+    $menu_item = content_menu_get_menu_item_from_querystring();
+    $menu_item['link_path'] = "node/" . $node->nid;
+    content_menu_link_save($menu_item);
+  }
+}
 
 /**
  * Implementation of hook_form_alter().
@@ -438,21 +452,33 @@ function content_menu_form_alter(&$form, &$form_state, $form_id) {
     }
 
     if (isset($form['menu'])) {
-      // Hide description field from menu item fieldset.
-      $form['menu']['link']['description']['#access'] = FALSE;
+      if (isset($_GET['menu_link_path']) && $_GET['menu_link_path'] == 'menu-dummy') {
+        // If this node is being created to replace a menu dummy, substitute the usual menu form for a description of what will happen.
+        $form['menu']['enabled']['#access'] = FALSE;
+        $form['menu']['link']['#access'] = FALSE;
+        $trail = content_menu_get_menu_trail($_GET['menu_mlid']);
+        $form['menu']['menu_dummy_replace'] = array(
+          '#markup' => t('A link to this node will replace the menu dummy at <br> %trail', array('%trail' => implode(' » ', $trail))),
+        );
+        $form['title']['#default_value'] = $form['title_field']['und']['0']['value']['#default_value'] = $_GET['menu_title'];
+      }
+      else {
+        // Hide description field from menu item fieldset.
+        $form['menu']['link']['description']['#access'] = FALSE;
 
-      // Pre-Populate menu item fields, if given via querystring.
-      if (isset($_GET['menu_title'])) {
-        $menu_item = content_menu_get_menu_item_from_querystring();
+        // Pre-Populate menu item fields, if given via querystring.
+        if (isset($_GET['menu_title'])) {
+          $menu_item = content_menu_get_menu_item_from_querystring();
 
-        // Set node form's menu item input field according to query string input.
-        $form['menu']['enabled']['#default_value'] = 1;
-        $form['menu']['link']['hidden']['#value'] = $menu_item['hidden'];
-        $form['menu']['link']['link_title']['#default_value'] = $menu_item['title'];
-        $form['menu']['link']['parent']['#default_value'] = $menu_item['name'] . ':' . $menu_item['plid'];
-        $form['menu']['link']['weight']['#default_value'] = $menu_item['weight'];
+          // Set node form's menu item input field according to query string input.
+          $form['menu']['enabled']['#default_value'] = 1;
+          $form['menu']['link']['hidden']['#value'] = $menu_item['hidden'];
+          $form['menu']['link']['link_title']['#default_value'] = $menu_item['title'];
+          $form['menu']['link']['parent']['#default_value'] = $menu_item['name'] . ':' . $menu_item['plid'];
+          $form['menu']['link']['weight']['#default_value'] = $menu_item['weight'];
 
-        $form['title']['#default_value'] = $form['title_field']['und']['0']['value']['#default_value'] = $menu_item['title'];
+          $form['title']['#default_value'] = $form['title_field']['und']['0']['value']['#default_value'] = $menu_item['title'];
+        }
       }
     }
   }
@@ -466,6 +492,22 @@ function content_menu_form_alter(&$form, &$form_state, $form_id) {
 //
 //
 
+/**
+ * Build the menu trail array that points to the given mlid.
+ */
+function content_menu_get_menu_trail($leaf_mlid) {
+  $menu_link = menu_link_load($leaf_mlid);
+  $menu = menu_load($menu_link['menu_name']);
+  $trail = array();
+
+  while ($menu_link) {
+    array_unshift($trail, $menu_link['link_title']);
+    $menu_link = menu_link_load($menu_link['plid']);
+  }
+  array_unshift($trail, $menu['title']);
+
+  return $trail;
+}
 
 /**
  * Build menu item data from querystring.

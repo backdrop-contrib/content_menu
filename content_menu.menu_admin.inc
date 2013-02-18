@@ -200,6 +200,28 @@ function _content_menu_menu_item_element_alter(&$el)  {
       );
     }
 
+   // Add "new <node-type>" operation to Dummies
+   if ($link_path[0] == 'menu-dummy') {
+     $node_type_count = 0;
+     foreach(node_type_get_types() as $node_type) {
+       $type = $node_type->type;
+       if (user_access('create ' . $type . ' content')) {
+         $node_menu_options = variable_get('menu_options_' . $type, array('main-menu' => 'main-menu'));
+         if (in_array($el_item['menu_name'], $node_menu_options)) {
+           $el_ops['new_' . $type] = array(
+             '#type' => 'link',
+             'weight' => 10 + $node_type_count,
+             '#title' => t('New @type', array('@type' => t($node_type->name))),
+             '#href' => 'node/add/' . str_replace("_", "-", $type),
+             '#options' => array(
+               'query' => content_menu_assemble_query_string($el_item),
+             ),
+           );
+         }
+       }
+     }
+   }
+
     // Add "configure" operation by cloning "edit" operation.
     $el_ops['configure'] = $el_ops['edit'];
     $el_ops['configure']['#title'] = t('configure item');
