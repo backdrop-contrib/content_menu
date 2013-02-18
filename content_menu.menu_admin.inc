@@ -1,6 +1,4 @@
 <?php
-require_once 'filters/content_menu_domain_filter.php';
-require_once 'filters/content_menu_language_filter.php';
 
 
 //
@@ -49,6 +47,8 @@ function _content_menu_form_menu_overview_form_alter(&$form, &$form_state, $form
   if ($filtering_active) {
     // Add form elements for filters.
     // @todo Add configuration interface for filters.
+    require_once 'filters/content_menu_domain_filter.php';
+    require_once 'filters/content_menu_language_filter.php';
     $filters = array(new content_menu_domain_filter(), new content_menu_language_filter($form['#menu']['menu_name']));
     // Add filter widgets to form.
     foreach($filters as $f){

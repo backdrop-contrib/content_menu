@@ -82,7 +82,7 @@ function content_menu_menu_alter(&$items) {
  * @todo Refactor as ajax is actually not used.
  */
 function content_menu_init() {
-  if ((arg(0) == 'system') && (arg(1) == 'ajax')) {
+  if (arg(0) == 'admin' || ((arg(0) == 'system') && (arg(1) == 'ajax'))) {
     module_load_include('inc', 'content_menu', 'content_menu.menu_admin');
   }
 }
