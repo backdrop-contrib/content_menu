@@ -176,7 +176,7 @@ function _content_menu_menu_item_element_alter(&$el)  {
 
     // ... do nothing for menu item dummies.
     if ($link_path[0] == 'menu-dummy') {
-      $target_content = t('Dummy');
+      $target_content = t('Placeholder');
     }
     // ... lead to node edit form for node-url-items.
     else if (($link_path[0] == 'node') && (is_numeric($link_path[1]))) {
@@ -600,7 +600,7 @@ function _content_menu_menu_item_target_types_alter(&$target_types, &$context) {
   );
 
   $target_types['dummy'] = array(
-    'label' => t('Dummy'),
+    'label' => t('Placeholder'),
     'handler' => 'content_menu_menu_form_handler_dummy',
     'clean_menu_save_message' => FALSE
   );

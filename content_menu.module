@@ -59,7 +59,7 @@ function content_menu_menu() {
  * For use as target with dummy menu items.
  */
 function content_menu_menu_callback_menu_dummy() {
-  return t('This is a menu dummy.');
+  return t('This is an empty placeholder page for a menu item.<br /><br />You can replace it with a valid target page URL in the <a href="@url">menu administration</a>.', array('@url' => url('admin/structure/menu')));
 }
 
 
