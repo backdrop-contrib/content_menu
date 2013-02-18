@@ -75,6 +75,19 @@ function content_menu_menu_alter(&$items) {
   unset($items['admin/structure/menu']['file']);
 }
 
+/**
+ * Implementation of hook_init().
+ *
+ * Necessary to invoke for ajax callback to work correctly.
+ * @todo Refactor as ajax is actually not used.
+ */
+function content_menu_init() {
+  if ((arg(0) == 'system') && (arg(1) == 'ajax')) {
+    module_load_include('inc', 'content_menu', 'content_menu.menu_admin');
+  }
+}
+
+
 
 /**
  * Callback for altered admin/structure/menu router item.

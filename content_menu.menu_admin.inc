@@ -1,5 +1,6 @@
 <?php
-
+require_once 'filters/content_menu_domain_filter.php';
+require_once 'filters/content_menu_language_filter.php';
 
 
 //
@@ -38,14 +39,46 @@ function _content_menu_menu_overview_page_extended() {
  */
 function _content_menu_form_menu_overview_form_alter(&$form, &$form_state, $form_id) {
   $form['#theme'][0] = 'menu_overview_form_extended';
-  // ToDo: Clean up and untangle operations-changing and target_content setting.
 
+  // Check whether any filtering element should be acitvated.
+  $filtering_active = TRUE;
+  // Filtering depends on ctools module.
+  // @todo Remove ctools dependency as ajax is actually not used.
+  $filtering_active = $filtering_active && module_exists('ctools');
+
+  if ($filtering_active) {
+    // Add form elements for filters.
+    // @todo Add configuration interface for filters.
+    $filters = array(new content_menu_domain_filter(), new content_menu_language_filter($form['#menu']['menu_name']));
+    // Add filter widgets to form.
+    foreach($filters as $f){
+      $f->addFilterWidget($form, $form_state, $form_id);
+    }
+  }
+
+  // ToDo: Clean up and untangle operations-changing and target_content setting.
+  $hidden = array();
   // Adjust operations for each item.
   foreach (element_children($form) as $mlid) {
     $el = &$form[$mlid];
+    if ($filtering_active) {
+      foreach($filters as $f){
+        if ($f->hideElement($el)){
+          unset($form[$mlid]);
+          $hidden[$el['#item']['mlid']] = $el['#item']['mlid'];
+          continue;
+        }
+      }
+    }
+    if (isset($el['#item']['plid']) &&
+      isset($hidden[$el['#item']['plid']])) { // check if a parent has been disabled before if so the childern will be hidden too
+      unset($form[$mlid]);
+      $hidden[$el['#item']['mlid']] = $el['#item']['mlid'];
+      continue;
+    }
+
     $el['#inline_edit_title'] = TRUE;
     if (isset($form[$mlid]['operations'])) {
-
       // Invoke hook to let modules provide target operations for new item.
       drupal_alter('menu_item_element', $el);
 
@@ -406,6 +439,11 @@ function theme_menu_overview_form_extended($variables) {
   $output = '';
   if (empty($rows)) {
     $rows[] = array(array('data' => $form['#empty_text'], 'colspan' => '7'));
+  }
+  // render selection filter widgets on top
+  if (isset($form['#content_menu_filter_widget'])){
+    foreach($form['#content_menu_filter_widget'] as $widgetname)
+    $output .= drupal_render($form[$widgetname]);
   }
   $output .= theme('table', array('header' => $header, 'rows' => $rows, 'attributes' => array('id' => 'menu-overview')));
   $output .= drupal_render_children($form);
