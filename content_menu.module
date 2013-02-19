@@ -20,6 +20,7 @@
  */
 
 DEFINE('CONTENT_MENU_ADD_EXISTING_CONTENT_URL', 'admin/structure/menu/manage/add_existing_content');
+DEFINE('CONTENT_MENU_ADD_EXISTING_VIEW_URL', 'admin/structure/menu/manage/add_existing_view');
 DEFINE('CONTENT_MENU_ALTER_ALL_MENUS', FALSE);
 DEFINE('CONTENT_MENU_ADD_ITEM_WEIGHT', 50);
 
@@ -50,6 +51,14 @@ function content_menu_menu() {
     'access arguments' => array('access content'),
     'type' => MENU_CALLBACK,
   );
+  $items[CONTENT_MENU_ADD_EXISTING_VIEW_URL] = array(
+    'title' => 'Add existing view.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('content_menu_add_exiting_view'),
+    'access arguments' => array('access content'),
+    'file' => 'content_menu.menu_admin.inc',
+  );
+
   return $items;
 }
 

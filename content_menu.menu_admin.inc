@@ -262,6 +262,8 @@ function _content_menu_menu_item_element_alter(&$el)  {
         $page_arguments = unserialize($el_item['page_arguments']);
         $el_ops['edit']['#href'] = 'admin/structure/views/view/' . $page_arguments[0] . '/edit/' . $page_arguments[1];
       }
+      $el_ops['selectcontent']['#href'] = CONTENT_MENU_ADD_EXISTING_VIEW_URL;
+      $el_ops['selectcontent']['#title'] = t('select view');
       $target_content = t('View');
     }
     // ... menu position rule.
@@ -611,6 +613,75 @@ function content_menu_menu_form_handler_menu_position_existing($form, $form_stat
   }
 }
 
+/**
+ * Menu add item operation handler for a new menu item to an existing view.
+ */
+function content_menu_menu_form_handler_existing_view($form, $form_state, $item) {
+  drupal_set_message(t('You`re about to create a new menu item for an existing view.'));
+  drupal_set_message(t('Complete the process by finding and selecting the view to add to the menu.'));
+  drupal_goto(CONTENT_MENU_ADD_EXISTING_VIEW_URL, array('query' => content_menu_assemble_query_string($item)));
+}
+
+/**
+ * List all views with a page display.
+ */
+function content_menu_add_exiting_view($form, $form_state) {
+  if (!module_exists('views')) return;
+
+  $form = array();
+
+  $item = content_menu_get_menu_item_from_querystring();
+  $form['#menu_item'] = $item;
+
+  $all_views = views_get_all_views();
+  foreach ($all_views as $view) {
+    foreach ($view->display as $display) {
+      if ($display->display_plugin == 'page') {
+        if ((!property_exists($view, 'disabled') || (property_exists($view, 'disabled') && !$view->disabled))) {
+          $view_path = $display->display_options['path'];
+          $view_title = check_plain($view->name . ' - ' . $display->display_title . ' (' . $display->display_options['path'] . ')');
+          if (drupal_valid_path($view_path)) {
+            $options[$view_path] = $view_title;
+          }
+        }
+      }
+    }
+  }
+
+  if (!empty($options)) {
+    asort($options);
+    $form['existing_view'] = array(
+      '#type' => 'radios',
+      '#title' => t('Link to this view'),
+      '#default_value' => isset($item['link_path']) ? $item['link_path'] : NULL,
+      '#required' => TRUE,
+      '#options' => $options,
+    );
+    $form['submit'] = array(
+      '#type' => 'submit',
+      '#value' => t('Save'),
+      '#submit' => array('content_menu_add_exiting_view_submit'),
+    );
+  }
+  else {
+    $no_views_notice = t('There are no available views.');
+    if (module_exists('views_ui') && user_access('administer views')) {
+      $no_views_notice .= ' ' . t('You can create views in the <a href="@url">Views UI</a>', array('@url' => url('admin/structure/views')));
+    }
+    $form['view_info'] = array(
+      '#title' => t('Use these views'),
+      '#type' => 'item',
+      '#markup' => $no_views_notice,
+    );
+  }
+  return $form;
+}
+
+function content_menu_add_exiting_view_submit($form, $form_state) {
+  $menu_item = $form['#menu_item'];
+  $menu_item['link_path'] = $form_state['values']['existing_view'];
+  content_menu_link_save($menu_item);
+}
 
 /**
  * Assembles a query string with menu item data.
@@ -686,6 +757,14 @@ function _content_menu_menu_item_target_types_alter(&$target_types, &$context) {
     'handler' => 'content_menu_menu_form_handler_menu_position_existing',
     'clean_menu_save_message' => TRUE,
   );
+
+  if (module_exists('views')) {
+    $target_types['existing_view'] = array(
+      'label' => t('Existing view'),
+      'handler' => 'content_menu_menu_form_handler_existing_view',
+      'clean_menu_save_message' => TRUE,
+    );
+  }
 
   if (module_exists('menu_position') && user_access('administer menu positions')) {
     $target_types['menu_position_rule'] = array(
