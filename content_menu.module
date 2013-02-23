@@ -26,7 +26,7 @@ DEFINE('CONTENT_MENU_ADD_ITEM_WEIGHT', 50);
 
 
 /**
- * Implementation for hook_permission().
+ * Implements hook_permission().
  */
 function content_menu_permission() {
   return array(
@@ -40,8 +40,7 @@ function content_menu_permission() {
 
 
 /**
- * Implementation of hook_menu().
- *
+ * Implements hook_menu().
  */
 function content_menu_menu() {
   // Add menu router item for use as target with dummy menu items.
@@ -85,7 +84,7 @@ function content_menu_menu_alter(&$items) {
 }
 
 /**
- * Implementation of hook_init().
+ * Implements hook_init().
  *
  * Necessary to invoke for ajax callback to work correctly.
  * @todo Refactor as ajax is actually not used.
@@ -108,8 +107,7 @@ function content_menu_menu_overview_page_extended() {
 
 
 /**
- * Implementation of hook_theme().
- *
+ * Implements hook_theme().
  */
 function content_menu_theme() {
   return array(
@@ -186,7 +184,7 @@ function content_menu_set_menu_admin_breadcrumb($menu_name = NULL) {
 
 
 /**
- * Implementation of hook_menu_link_insert.
+ * Implements hook_menu_link_insert().
  */
 function content_menu_menu_link_insert($link) {
   content_menu_mark_link_updated($link);
@@ -194,7 +192,7 @@ function content_menu_menu_link_insert($link) {
 
 
 /**
- * Implementation of hook_menu_link_update.
+ * Implements hook_menu_link_update().
  */
 function content_menu_menu_link_update($link) {
   content_menu_mark_link_updated($link);
@@ -228,7 +226,7 @@ function content_menu_mark_link_updated($link) {
 
 
 /**
- * Implementation of hook_form_FORM_ID_alter().
+ * Implements hook_form_FORM_ID_alter().
  *
  * Improve menu_edit_item form for better authoring experience.
  */
@@ -271,7 +269,7 @@ function content_menu_form_menu_edit_item_alter(&$form, &$form_state, $form_id) 
 
 
 /**
- * Implementation of hook_form_FORM_ID_alter().
+ * Implements hook_form_FORM_ID_alter().
  *
  * Improve menu_item_delete_form form for better authoring experience.
  */
@@ -334,7 +332,7 @@ function content_menu_item_delete_form_submit($form, &$form_state) {
 
 
 /**
- * Implementation of hook_form_FORM_ID_alter().
+ * Implements hook_form_FORM_ID_alter().
  *
  * Pre-populate input elements in menu_position_add_rule_form.
  */
@@ -349,7 +347,7 @@ function content_menu_form_menu_position_add_rule_form_alter(&$form, &$form_stat
 
 
 /**
- * Implementation of hook_form_FORM_ID_alter().
+ * Implements hook_form_FORM_ID_alter().
  *
  * Overhaul the menu_overview_form to improve menu authoring experience.
  */
@@ -362,7 +360,7 @@ function content_menu_form_menu_overview_form_alter(&$form, &$form_state, $form_
 
 
 /**
- * Implementation hook_menu_local_tasks_alter().
+ * Implements hook_menu_local_tasks_alter().
  *
  * Remove the "Add link" link on menu listing page, since
  * we add a "New item" row and form element, which cares for adding new items.
@@ -381,7 +379,7 @@ function content_menu_menu_local_tasks_alter(&$data, $router_item, $root_path) {
 
 
 /**
- * Implementation of template_preprocess_views_view_field().
+ * Implements template_preprocess_views_view_field().
  *
  * For views to select exiting content, rewrite the nid field ("select" link)
  * to link to the correct target url and pass through the querystring params.
@@ -401,7 +399,7 @@ function content_menu_preprocess_views_view_field(&$vars) {
 
 
 /**
- * Implementation of hook_menu_item_target_types_alter().
+ * Implements hook_menu_item_target_types_alter().
  *
  * Extend the target types for a new menu item provided by default.
  * See content_menu.api.php for further documentation.
@@ -431,7 +429,7 @@ function content_menu_menu_item_element_alter(&$el) {
 //
 
  /**
- * Implementation of hook_node_insert().
+ * Implements hook_node_insert().
  *
  * After creating a new node, if it's being created to replace a menu-dummy, perform the replacement.
  */
@@ -446,7 +444,7 @@ function content_menu_node_insert($node) {
 }
 
 /**
- * Implementation of hook_form_alter().
+ * Implements hook_form_alter().
  *
  * Improve menu item management for node edit forms.
  */
