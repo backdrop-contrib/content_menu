@@ -1,8 +1,12 @@
 <?php
 
 /**
+ * @file
+ * Installation hooks for Content Menu module
+ */
+
+/**
  * Implements hook_install().
- *
  */
 function content_menu_install() {
   // Set weight to come after core menu.module.
@@ -15,7 +19,7 @@ function content_menu_install() {
     ->execute()
     ->fetchField();
   db_update('system')
-    ->fields(array('weight' => $weight +1))
+    ->fields(array('weight' => $weight + 1))
     ->condition('name', 'content_menu', '=')
     ->execute();
 }

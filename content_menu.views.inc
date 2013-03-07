@@ -1,10 +1,15 @@
 <?php
 
 /**
+ * @file
+ * Views-related stuff for Content Menu module.
+ */
+
+/**
  * Implements hook_views_default_views().
  */
 function content_menu_views_default_views() {
-  $view = new view;
+  $view = new view();
   $view->name = 'menu_existing_content_selection';
   $view->description = '';
   $view->tag = 'default';
