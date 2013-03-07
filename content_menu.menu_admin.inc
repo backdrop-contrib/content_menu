@@ -570,7 +570,7 @@ function content_menu_menu_form_handler_dummy($form, $form_state, $item) {
  */
 function content_menu_menu_form_handler_node($form, $form_state, $item, $type) {
   $types = node_type_get_types();
-  drupal_set_message(t('You`re about to create a new menu item with new %type content.', array('%type' => $types[$type]->name)));
+  drupal_set_message(t("You're about to create a new menu item with new %type content.", array('%type' => $types[$type]->name)));
   drupal_set_message(t('Complete the process by filling out and saving the form below.'));
   $type = str_replace("_", "-", $type);
   drupal_goto('node/add/' . $type, array('query' => content_menu_assemble_query_string($item)));
@@ -581,7 +581,7 @@ function content_menu_menu_form_handler_node($form, $form_state, $item, $type) {
  * Menu add item operation handler for a new generic menu item.
  */
 function content_menu_menu_form_handler_url($form, $form_state, $item) {
-  drupal_set_message(t('You`re about to create a new generic menu item linking to a URL path.'));
+  drupal_set_message(t("You're about to create a new generic menu item linking to a URL path."));
   drupal_set_message(t('Complete the process by filling out and saving the form below.'));
   drupal_goto('admin/structure/menu/manage/' . $item['name'] . '/add', array('query' => content_menu_assemble_query_string($item)));
 }
@@ -591,7 +591,7 @@ function content_menu_menu_form_handler_url($form, $form_state, $item) {
  * Menu add item operation handler for a new generic menu item.
  */
 function content_menu_menu_form_handler_menu_position_rule($form, $form_state, $item) {
-  drupal_set_message(t('You`re about to create a new generic menu position rule.'));
+  drupal_set_message(t("You're about to create a new generic menu position rule."));
   drupal_set_message(t('Complete the process by filling out and saving the form below.'));
   drupal_goto('admin/structure/menu-position/add', array('query' => content_menu_assemble_query_string($item)));
 }
@@ -607,7 +607,7 @@ function content_menu_menu_form_handler_menu_position_existing($form, $form_stat
     content_menu_menu_form_handler_url($form, $form_state, $item);
   }
   else {
-    drupal_set_message(t('You`re about to create a new menu item for an existing content.'));
+    drupal_set_message(t("You're about to create a new menu item for an existing content."));
     drupal_set_message(t('Complete the process by finding and selecting an existing content to add to the menu.'));
     drupal_goto($url, array('query' => content_menu_assemble_query_string($item)));
   }
@@ -617,7 +617,7 @@ function content_menu_menu_form_handler_menu_position_existing($form, $form_stat
  * Menu add item operation handler for a new menu item to an existing view.
  */
 function content_menu_menu_form_handler_existing_view($form, $form_state, $item) {
-  drupal_set_message(t('You`re about to create a new menu item for an existing view.'));
+  drupal_set_message(t("You're about to create a new menu item for an existing view."));
   drupal_set_message(t('Complete the process by finding and selecting the view to add to the menu.'));
   drupal_goto(CONTENT_MENU_ADD_EXISTING_VIEW_URL, array('query' => content_menu_assemble_query_string($item)));
 }
