@@ -1,12 +1,9 @@
 <?php
 
-
-//
-//
-//  Menu management workflow improvements
-//
-//
-
+/**
+ * @file
+ * Menu Management Workflow improvements.
+ */
 
 /**
  * Callback for altered admin/structure/menu router item.
@@ -51,7 +48,7 @@ function _content_menu_form_menu_overview_form_alter(&$form, &$form_state, $form
     require_once 'filters/content_menu_language_filter.php';
     $filters = array(new content_menu_domain_filter(), new content_menu_language_filter($form['#menu']['menu_name']));
     // Add filter widgets to form.
-    foreach($filters as $f){
+    foreach ($filters as $f) {
       $f->addFilterWidget($form, $form_state, $form_id);
     }
   }
@@ -62,8 +59,8 @@ function _content_menu_form_menu_overview_form_alter(&$form, &$form_state, $form
   foreach (element_children($form) as $mlid) {
     $el = &$form[$mlid];
     if ($filtering_active) {
-      foreach($filters as $f){
-        if ($f->hideElement($el)){
+      foreach ($filters as $f) {
+        if ($f->hideElement($el)) {
           unset($form[$mlid]);
           $hidden[$el['#item']['mlid']] = $el['#item']['mlid'];
           continue;
@@ -71,7 +68,9 @@ function _content_menu_form_menu_overview_form_alter(&$form, &$form_state, $form
       }
     }
     if (isset($el['#item']['plid']) &&
-      isset($hidden[$el['#item']['plid']])) { // check if a parent has been disabled before if so the childern will be hidden too
+      isset($hidden[$el['#item']['plid']])) {
+      // Check if a parent has been disabled before.
+      // If so, the childern will be hidden too.
       unset($form[$mlid]);
       $hidden[$el['#item']['mlid']] = $el['#item']['mlid'];
       continue;
@@ -84,7 +83,7 @@ function _content_menu_form_menu_overview_form_alter(&$form, &$form_state, $form
 
       // Make sure that operations are ordered by their weight, then unset it.
       uasort($el['operations'], 'drupal_sort_weight');
-      foreach($el['operations'] as $el_op_key => $el_op) {
+      foreach ($el['operations'] as $el_op_key => $el_op) {
         unset($el['operations'][$el_op_key]['weight']);
       }
 
@@ -93,7 +92,7 @@ function _content_menu_form_menu_overview_form_alter(&$form, &$form_state, $form
         // Split up operation in dropbutton-ops and other ops.
         $other_operations  = array();
         $dropbutton_operations = array();
-        foreach($form[$mlid]['operations'] as $op_key => $op_item) {
+        foreach ($form[$mlid]['operations'] as $op_key => $op_item) {
           if (is_array($op_item) && isset($op_item['#type'])) {
             if ($op_item['#type'] == 'link') {
               $dropbutton_operations[$op_key] = array(
@@ -118,7 +117,6 @@ function _content_menu_form_menu_overview_form_alter(&$form, &$form_state, $form
         );
         $el['operations'] += $other_operations;
       }
-
 
       // Count operations of this item.
       $el['#operations_count'] = count($form[$mlid]['operations']);
@@ -149,7 +147,7 @@ function _content_menu_form_menu_overview_form_alter(&$form, &$form_state, $form
 
   // Change submit handler function to our own implementation.
   $form['#submit'] = array('content_menu_menu_overview_form_submit_extended');
-  // Prevent 'destination' from hijacking our submit
+  // Prevent 'destination' from hijacking our submit.
   unset($_GET['destination']);
 
   if (!isset($form['actions'])) {
@@ -171,12 +169,11 @@ function _content_menu_form_menu_overview_form_alter(&$form, &$form_state, $form
  *
  * @param $el Array The form element of the menu item to alter.
  */
-function _content_menu_menu_item_element_alter(&$el)  {
+function _content_menu_menu_item_element_alter(&$el) {
   $el_item = &$el['#item'];
   $el_ops = &$el['operations'];
   $target_content = '';
 
-  //$router_path = $el_item['router_path'];
   $link_path = ($el_item['link_path'] == '<front>') ? variable_get('site_frontpage', 'node') : $el_item['link_path'];
   $link_path = (array) explode('/', $link_path);
   $link_path = array_pad($link_path, 2, '');
@@ -200,27 +197,27 @@ function _content_menu_menu_item_element_alter(&$el)  {
       );
     }
 
-   // Add "new <node-type>" operation to Dummies
-   if ($link_path[0] == 'menu-dummy') {
-     $node_type_count = 0;
-     foreach(node_type_get_types() as $node_type) {
-       $type = $node_type->type;
-       if (user_access('create ' . $type . ' content')) {
-         $node_menu_options = variable_get('menu_options_' . $type, array('main-menu' => 'main-menu'));
-         if (in_array($el_item['menu_name'], $node_menu_options)) {
-           $el_ops['new_' . $type] = array(
-             '#type' => 'link',
-             'weight' => 10 + $node_type_count,
-             '#title' => t('New @type', array('@type' => t($node_type->name))),
-             '#href' => 'node/add/' . str_replace("_", "-", $type),
-             '#options' => array(
-               'query' => content_menu_assemble_query_string($el_item),
-             ),
-           );
-         }
-       }
-     }
-   }
+    // Add "new <node-type>" operation to Dummies.
+    if ($link_path[0] == 'menu-dummy') {
+      $node_type_count = 0;
+      foreach (node_type_get_types() as $node_type) {
+        $type = $node_type->type;
+        if (user_access('create ' . $type . ' content')) {
+          $node_menu_options = variable_get('menu_options_' . $type, array('main-menu' => 'main-menu'));
+          if (in_array($el_item['menu_name'], $node_menu_options)) {
+            $el_ops['new_' . $type] = array(
+              '#type' => 'link',
+              'weight' => 10 + $node_type_count,
+              '#title' => t('New @type', array('@type' => t($node_type->name))),
+              '#href' => 'node/add/' . str_replace("_", "-", $type),
+              '#options' => array(
+                'query' => content_menu_assemble_query_string($el_item),
+              ),
+            );
+          }
+        }
+      }
+    }
 
     // Add "configure" operation by cloning "edit" operation.
     $el_ops['configure'] = $el_ops['edit'];
@@ -228,13 +225,12 @@ function _content_menu_menu_item_element_alter(&$el)  {
     $el_ops['configure']['weight'] = 3;
 
     // Change "edit" operation to ...
-
     // ... do nothing for menu item dummies.
     if ($link_path[0] == 'menu-dummy') {
       $target_content = t('Placeholder');
     }
     // ... lead to node edit form for node-url-items.
-    else if (($link_path[0] == 'node') && (is_numeric($link_path[1]))) {
+    elseif (($link_path[0] == 'node') && (is_numeric($link_path[1]))) {
       $node = node_load($link_path[1]);
       if (is_object($node)) {
         if (node_access('update', $node)) {
@@ -242,14 +238,14 @@ function _content_menu_menu_item_element_alter(&$el)  {
         }
         $node_type = node_type_get_type($node);
         $target_content = t($node_type->name);
-        // mark unpublished nodes
+        // Mark unpublished nodes.
         if (!$node->status) {
           $target_content = '<span class="menu-item-content-target-unpublished">' . $target_content . '</span>';
         }
       }
     }
     // ... lead to panel page edit form for panel paged.
-    else if (($el_item['page_callback'] == 'page_manager_page_execute')) {
+    elseif (($el_item['page_callback'] == 'page_manager_page_execute')) {
       if (user_access('use page manager')) {
         $page_arguments = unserialize($el_item['page_arguments']);
         $el_ops['edit']['#href'] = 'admin/structure/pages/edit/page-' . implode('/', $page_arguments);
@@ -257,7 +253,7 @@ function _content_menu_menu_item_element_alter(&$el)  {
       $target_content = t('Panel');
     }
     // ... lead to view edit form for views.
-    else if ($el_item['page_callback'] == 'views_page') {
+    elseif ($el_item['page_callback'] == 'views_page') {
       if (user_access('administer views')) {
         $page_arguments = unserialize($el_item['page_arguments']);
         $el_ops['edit']['#href'] = 'admin/structure/views/view/' . $page_arguments[0] . '/edit/' . $page_arguments[1];
@@ -267,7 +263,7 @@ function _content_menu_menu_item_element_alter(&$el)  {
       $target_content = t('View');
     }
     // ... menu position rule.
-    else if ($link_path[0] == 'menu-position') {
+    elseif ($link_path[0] == 'menu-position') {
       if (!user_access('administer menu positions')) {
         $el_ops['configure'] = $el_ops['edit'] = array();
       }
@@ -277,10 +273,12 @@ function _content_menu_menu_item_element_alter(&$el)  {
     else {
       // If no other content or target is identifier, assume generic URL.
       if (url_is_external($el_item['link_path'])) {
-        $target_content = t('URL'); // external
+        // External.
+        $target_content = t('URL');
       }
       else {
-        $target_content = t('Path'); // internal
+        // Internal.
+        $target_content = t('Path');
       }
     }
 
@@ -296,7 +294,7 @@ function _content_menu_menu_item_element_alter(&$el)  {
       }
     }
   }
-  else { //        if (!isset($el_ops['edit']))
+  else {
     $el_ops['edit'] = array();
   }
 
@@ -323,19 +321,18 @@ function _content_menu_menu_item_element_alter(&$el)  {
 
 /**
  * Add item/row/elements to menu overview form for "add item" functionality.
- *
  */
 function content_menu_form_menu_overview_form_alter_additem(&$form) {
   // Assemble and add the "Add link" item.
   $form['additem'] = array(
     '#attributes' => array(
-      'class' =>array('menu-additem'),
+      'class' => array('menu-additem'),
     ),
     'hidden' => array(
       '#type' => 'checkbox',
       '#title' => t('Enable the new menu link'),
       '#title_display' => 'invisible',
-      '#default_value' => true,
+      '#default_value' => TRUE,
     ),
     'weight' => array(
       '#type' => 'weight',
@@ -371,7 +368,7 @@ function content_menu_form_menu_overview_form_alter_additem(&$form) {
   $target_types = content_menu_get_target_types($form['#menu']['menu_name']);
 
   // Retrieve possible add-"type"-operations for "Add link" item.
-  foreach($target_types as $op_key => $op_info) {
+  foreach ($target_types as $op_key => $op_info) {
     $target_types[$op_key] = $op_info['label'];
   }
 
@@ -437,7 +434,8 @@ function theme_menu_overview_form_extended($variables) {
       $element['mlid']['#attributes']['class'] = array('menu-mlid');
       $element['weight']['#attributes']['class'] = array('menu-weight');
 
-      // Change the parent field to a hidden. This allows any value but hides the field.
+      // Change the parent field to a hidden.
+      // This allows any value but hides the field.
       $element['plid']['#type'] = 'hidden';
       $depth = isset($element['#item']) ? $element['#item']['depth'] : 1;
 
@@ -464,10 +462,11 @@ function theme_menu_overview_form_extended($variables) {
   if (empty($rows)) {
     $rows[] = array(array('data' => $form['#empty_text'], 'colspan' => '7'));
   }
-  // render selection filter widgets on top
-  if (isset($form['#content_menu_filter_widget'])){
-    foreach($form['#content_menu_filter_widget'] as $widgetname)
-    $output .= drupal_render($form[$widgetname]);
+  // Render selection filter widgets on top.
+  if (isset($form['#content_menu_filter_widget'])) {
+    foreach ($form['#content_menu_filter_widget'] as $widgetname) {
+      $output .= drupal_render($form[$widgetname]);
+    }
   }
   $output .= theme('table', array('header' => $header, 'rows' => $rows, 'attributes' => array('id' => 'menu-overview')));
   $output .= drupal_render_children($form);
@@ -477,19 +476,14 @@ function theme_menu_overview_form_extended($variables) {
 
 /**
  * Submit handler for menu_overview_form extended with item adding handling.
- *
  */
 function content_menu_menu_overview_form_submit_extended($form, &$form_state) {
-
-  //
   // Edit item handling.
-  //
-
   $max_weight = 0;
-  // Step though items
+  // Step though items.
   foreach (element_children($form) as $mlid) {
     $el = &$form[$mlid];
-    // Keep track of maximum weight
+    // Keep track of maximum weight.
     if (isset($el['#item']['weight']) && ($el['#item']['weight'] > $max_weight)) {
       $max_weight = $el['#item']['weight'];
     }
@@ -509,17 +503,12 @@ function content_menu_menu_overview_form_submit_extended($form, &$form_state) {
   // Do standard menu.module's item processing.
   menu_overview_form_submit($form, $form_state);
 
-
-  //
   // Add item handling.
-  //
-
   $item = $form_state['input']['additem'];
 
   // If title has been entered for new menu item, prepare add operation.
   if (trim($item['title'] != '')) {
     // Complete data for new menu item.
-
     $item['link_title'] = $item['title'];
     $item['name'] = $form['#menu']['menu_name'];
     $item['hidden'] = $item['hidden'] ? 0 : 1;
@@ -626,7 +615,9 @@ function content_menu_menu_form_handler_existing_view($form, $form_state, $item)
  * List all views with a page display.
  */
 function content_menu_add_exiting_view($form, $form_state) {
-  if (!module_exists('views')) return;
+  if (!module_exists('views')) {
+    return;
+  }
 
   $form = array();
 
@@ -677,6 +668,9 @@ function content_menu_add_exiting_view($form, $form_state) {
   return $form;
 }
 
+/**
+ * Submit handler for the form above.
+ */
 function content_menu_add_exiting_view_submit($form, $form_state) {
   $menu_item = $form['#menu_item'];
   $menu_item['link_path'] = $form_state['values']['existing_view'];
@@ -698,8 +692,8 @@ function content_menu_assemble_query_string($item) {
     'menu_hidden' => $item['hidden'],
     'menu_weight' => $item['weight'],
     'menu_link_path' => isset($item['link_path']) ? $item['link_path'] : NULL ,
-    'destination' => isset($item['destination']) ? $item['destination'] : ('admin/structure/menu/manage/' . $item['name']), //current_path(),
-    'msg_buffer' =>  isset($item['msg_buffer']) ? $item['msg_buffer'] : NULL,
+    'destination' => isset($item['destination']) ? $item['destination'] : ('admin/structure/menu/manage/' . $item['name']),
+    'msg_buffer' => isset($item['msg_buffer']) ? $item['msg_buffer'] : NULL,
   );
   return $query;
 }
@@ -727,16 +721,16 @@ function _content_menu_menu_item_target_types_alter(&$target_types, &$context) {
   $target_types['url'] = array(
     'label' => t('URL'),
     'handler' => 'content_menu_menu_form_handler_url',
-    'clean_menu_save_message' => TRUE
+    'clean_menu_save_message' => TRUE,
   );
 
   $target_types['dummy'] = array(
     'label' => t('Placeholder'),
     'handler' => 'content_menu_menu_form_handler_dummy',
-    'clean_menu_save_message' => FALSE
+    'clean_menu_save_message' => FALSE,
   );
 
-  foreach(node_type_get_types() as $node_type) {
+  foreach (node_type_get_types() as $node_type) {
     if (user_access('create ' . $node_type->type . ' content') || user_access('administer nodes')) {
       $node_menu_options = variable_get('menu_options_' . $node_type->type, array('main-menu' => 'main-menu'));
       if (in_array($context['menu_name'], $node_menu_options)) {
@@ -774,5 +768,3 @@ function _content_menu_menu_item_target_types_alter(&$target_types, &$context) {
     );
   }
 }
-
-
