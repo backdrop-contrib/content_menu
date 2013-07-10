@@ -260,7 +260,7 @@ function content_menu_form_menu_edit_item_alter(&$form, &$form_state, $form_id) 
  * Improve menu_item_delete_form form for better authoring experience.
  */
 function content_menu_form_menu_item_delete_form_alter(&$form, &$form_state, $form_id) {
-  if ($form['#item']['mlid']['#value']) {
+  if (!empty($form['#item']['mlid'])) {
     // Extend breadcrumb.
     $menu_name = $form['#item']['menu_name'];
     content_menu_set_menu_admin_breadcrumb($menu_name);
