@@ -382,9 +382,11 @@ function content_menu_preprocess_views_view_field(&$vars) {
   if (($field->field == 'nid') && ($view->name == $selection_view[0]) && ((!isset($selection_view[1]) || ($view->current_display == $selection_view[1])))) {
     module_load_include('inc', 'content_menu', 'content_menu.menu_admin');
     $item = content_menu_get_menu_item_from_querystring();
-    $item['link_path'] = 'node/' . $field->original_value;
-    $url = 'admin/structure/menu/manage/' . $item['name'] . '/add';
-    $vars['output'] = l(t('select'), $url, array('query' => content_menu_assemble_query_string($item)));
+    if (!empty($item)) {
+      $item['link_path'] = 'node/' . $field->original_value;
+      $url = 'admin/structure/menu/manage/' . $item['name'] . '/add';
+      $vars['output'] = l(t('select'), $url, array('query' => content_menu_assemble_query_string($item)));
+    }
   }
 }
 
