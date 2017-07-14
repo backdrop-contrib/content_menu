@@ -11,7 +11,7 @@ require_once 'content_menu_filter.php';
 
 class content_menu_domain_filter implements content_menu_filter {
 
-  private $active;
+  public $active;
   private $domain;
 
   function __construct() {
@@ -30,11 +30,9 @@ class content_menu_domain_filter implements content_menu_filter {
         '#type' => 'select',
         '#title' => t('Filter menu by domain'),
         '#options' => $options,
-        '#default_value' => $this->domain['domain_id'],
-        '#ajax' => array(
-          'callback' => '_content_menu_filter_elements_by_domain',
-        )
+        '#default_value' => $this->domain['domain_id']
       );
+      $form['filters']['submit']['#submit'][] = '_content_menu_filter_elements_by_domain';
       $form['#content_menu_filter_widget'][] = 'domainselect';
     }
   }
@@ -106,9 +104,5 @@ class content_menu_domain_filter implements content_menu_filter {
 
 function _content_menu_filter_elements_by_domain($form, &$form_state) {
   $domain = $form_state['values']['domainselect'];
-  ctools_include('ajax');
   $_SESSION['content_menu_domain_filter'] = $domain;
-  $commands[] = ctools_ajax_command_reload();
-  print ajax_render($commands);
-  exit;
 }

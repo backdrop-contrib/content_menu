@@ -38,13 +38,31 @@ function _content_menu_form_menu_overview_form_alter(&$form, &$form_state, $form
 
   // Add form elements for filters.
   // @todo Add configuration interface for filters.
-  //require_once 'filters/content_menu_domain_filter.php';
+  require_once 'filters/content_menu_domain_filter.php';
   require_once 'filters/content_menu_language_filter.php';
-  //$filters = array(new content_menu_domain_filter(), new content_menu_language_filter($form['#menu']['menu_name']));
-  $filters = array(new content_menu_language_filter($form['#menu']['menu_name']));
+  $filters = array(new content_menu_domain_filter(), new content_menu_language_filter($form['#menu']['menu_name']));
+
   // Add filter widgets to form.
   foreach ($filters as $f) {
-    $f->addFilterWidget($form, $form_state, $form_id);
+    if ($f->active) {
+      $f->addFilterWidget($form, $form_state, $form_id);
+      $filters_fieldset = TRUE;
+    }
+  }
+
+  if (isset($filters_fieldset)) {
+    // Add a fieldset for the filters.
+    $form['filters'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Filters'),
+    );
+    // Add a submit button for the filters.
+    $form['filters']['submit'] = array(
+      '#type' => 'submit',
+      '#value' => t('Submit'),
+      '#submit' => array(),
+      '#weight' => 80,
+    );
   }
 
   // ToDo: Clean up and untangle operations-changing and target_content setting.
@@ -100,7 +118,7 @@ function _content_menu_form_menu_overview_form_alter(&$form, &$form_state, $form
   // Add "add item" item/row/elements.
   content_menu_form_menu_overview_form_alter_additem($form);
 
-  // Add css as via backdrop_add_css and put it after ctools button css files.
+  // Add css as via backdrop_add_css.
   backdrop_add_css(backdrop_get_path('module', 'content_menu') . "/css/content_menu.css", array('weight' => 2));
 
   // Change submit handler function to our own implementation.
@@ -400,11 +418,16 @@ function theme_menu_overview_form_extended($variables) {
   if (empty($rows)) {
     $rows[] = array(array('data' => $form['#empty_text'], 'colspan' => '7'));
   }
-  // Render selection filter widgets on top.
-  if (isset($form['#content_menu_filter_widget'])) {
-    foreach ($form['#content_menu_filter_widget'] as $widgetname) {
-      $output .= backdrop_render($form[$widgetname]);
+  // Render filters fieldset first.
+  if (isset($form['filters'])) {
+    if (isset($form['#content_menu_filter_widget'])) {
+      // Add filter widgets.
+      foreach ($form['#content_menu_filter_widget'] as $widgetname) {
+        $form['filters'][$widgetname] = $form[$widgetname];
+        unset($form[$widgetname]);
+      }
     }
+    $output .= backdrop_render($form['filters']);
   }
   $output .= theme('table', array('header' => $header, 'rows' => $rows, 'attributes' => array('id' => 'menu-overview')));
   $output .= backdrop_render_children($form);

@@ -11,7 +11,7 @@ require_once 'content_menu_filter.php';
 
 class content_menu_language_filter implements content_menu_filter {
 
-  private $active;
+  public $active;
   private $language;
 
   function __construct($menu_name) {
@@ -33,12 +33,8 @@ class content_menu_language_filter implements content_menu_filter {
         '#title' => t('Filter menu by language'),
         '#options' => $options,
         '#default_value' => $this->language,
-        // @todo Remove ctools dependency as ajax is actually not used.
-        //       Refactor to use own form and submit handler instead.
-        '#ajax' => array(
-          'callback' => '_content_menu_filter_elements_by_language',
-        )
       );
+      $form['filters']['submit']['#submit'][] = '_content_menu_filter_elements_by_language';
       $form['#content_menu_filter_widget'][] = 'langselect';
     }
   }
@@ -81,14 +77,10 @@ class content_menu_language_filter implements content_menu_filter {
 
 function _content_menu_filter_elements_by_language($form, &$form_state) {
   $lang = $form_state['values']['langselect'];
-  //ctools_include('ajax');
   $_SESSION['content_menu_lang_filter'] = $lang;
   if ($lang = '') {
     unset($_SESSION['content_menu_lang_filter']);
   }
-  $commands[] = ctools_ajax_command_reload();
-  print ajax_render($commands);
-  exit;
 }
 
 
