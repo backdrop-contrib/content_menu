@@ -6,29 +6,6 @@
  */
 
 /**
- * Callback for altered admin/structure/menu router item.
- *
- * Only show custom menus to regular sitebuilders/editors (no system menus).
- */
-function _content_menu_menu_overview_page_extended() {
-  $config_names = config_get_names_with_prefix('menu.menu.');
-  $header = array(t('Title'), array('data' => t('Operations'), 'colspan' => '1'));
-  $rows = array();
-  foreach ($config_names as $config_name) {
-	$menu = config($config_name)->get();
-    if (content_menu_is_menu_considered($menu['menu_name']) || user_access('administer system menus')) {
-      $url = 'admin/structure/menu/manage/' . $menu['menu_name'];
-      $row = array(theme('menu_admin_overview', array('title' => $menu['title'], 'name' => $menu['menu_name'], 'description' => $menu['description'])));
-      $row[] = array('data' => l(t('Edit'), $url));
-      $rows[] = $row;
-    }
-  }
-
-  return theme('table', array('header' => $header, 'rows' => $rows));
-}
-
-
-/**
  * Actual implementation for content_menu_form_menu_overview_form_alter().
  *
  * Overhaul the menu_overview_form to improve menu authoring experience.

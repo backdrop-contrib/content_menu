@@ -26,6 +26,20 @@ You can create a new menu item as …
 
 The workflows are kept concise and seamless, e.g for adding new menu items along with brand new content or with comfortably choosing existing content to link to.
 
+The changes and improvements made by Content Menu include:
+
+Menu links listing
+- Relabeling the tabs ("Edit" and "Configure")
+- Directly assesing, accessing and editing a menu item's linked content from the menu management interface
+- Therefore, making a new "edit content" operation the default operation for menu items linking to nodes, views and layout pages
+- Re-labeling operations ("edit content", "configure item", "delete")
+- Directly create new menu items by entering title and positioning new items (analogous to field management interface)
+- Simple inline editing of menu item titles
+
+Menu management forms and pages
+- Offer choice to delete associated node content along with deletion of a menu item (if checked and user is permitted)
+- Node edit forms "menu settings" fieldset slightly improved
+
 ## Installation
 
 - Install this module using the official [Backdrop CMS instructions](https://backdropcms.org/guide/modules)
@@ -36,6 +50,10 @@ The workflows are kept concise and seamless, e.g for adding new menu items along
 - Go to Admin > Structure > Menus and start adding menu items into e.g the "Main Menu".
 - Or watch out Screencast (see above) to get ideas of what to do (and how).
 - See the content_menu.api.php file for further development information on new permission(s), system variables you can override, or hooks you might want to use as a developer to extend content_menu.module
+
+## Differences from drupal version
+
+Menus overview tweak and "Administer system menus" permission was removed in favor of [Menu Administration Per Menu](https://github.com/backdrop-contrib/menu_admin_per_menu) module. This functionality wasn't properly implemented in Content menu. System menus was removed from menus overview page but still was available for editing by users without "Administer system menus" permission.
 
 ## Resources
 
@@ -56,6 +74,8 @@ Bugs and Feature requests should be reported in the
 ## Credits
 
 - Content Menu is sponsored by http://www.wunderkraut.com
+- https://www.drupal.org/u/simon-georges
+- https://www.drupal.org/u/danielnolde
 - Ported to Backdrop CMS by [Alexander Rozhkov](https://github.com/Al-Rozhkov).
 
 ## License
