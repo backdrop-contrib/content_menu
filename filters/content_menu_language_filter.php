@@ -64,7 +64,7 @@ class content_menu_language_filter implements content_menu_filter {
     $i18n_mode = 0;
     $menu = menu_load($menuname);
     $i18n_mode = $menu && isset($menu['i18n_mode']) ? $menu['i18n_mode'] : 0;
-    return (drupal_multilingual() && ($i18n_mode != 0));
+    return ((config_get('system.core', 'language_count') > 1) && ($i18n_mode != 0));
   }
 
   private function _content_menu_language() {
@@ -81,7 +81,7 @@ class content_menu_language_filter implements content_menu_filter {
 
 function _content_menu_filter_elements_by_language($form, &$form_state) {
   $lang = $form_state['values']['langselect'];
-  ctools_include('ajax');
+  //ctools_include('ajax');
   $_SESSION['content_menu_lang_filter'] = $lang;
   if ($lang = '') {
     unset($_SESSION['content_menu_lang_filter']);

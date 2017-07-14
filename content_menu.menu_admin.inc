@@ -11,10 +11,11 @@
  * Only show custom menus to regular sitebuilders/editors (no system menus).
  */
 function _content_menu_menu_overview_page_extended() {
-  $result = db_query("SELECT * FROM {menu_custom} ORDER BY title", array(), array('fetch' => PDO::FETCH_ASSOC));
+  $config_names = config_get_names_with_prefix('menu.menu.');
   $header = array(t('Title'), array('data' => t('Operations'), 'colspan' => '1'));
   $rows = array();
-  foreach ($result as $menu) {
+  foreach ($config_names as $config_name) {
+	$menu = config($config_name)->get();
     if (content_menu_is_menu_considered($menu['menu_name']) || user_access('administer system menus')) {
       $url = 'admin/structure/menu/manage/' . $menu['menu_name'];
       $row = array(theme('menu_admin_overview', array('title' => $menu['title'], 'name' => $menu['menu_name'], 'description' => $menu['description'])));
@@ -35,22 +36,15 @@ function _content_menu_menu_overview_page_extended() {
 function _content_menu_form_menu_overview_form_alter(&$form, &$form_state, $form_id) {
   $form['#theme'][0] = 'menu_overview_form_extended';
 
-  // Check whether any filtering element should be acitvated.
-  $filtering_active = TRUE;
-  // Filtering depends on ctools module.
-  // @todo Remove ctools dependency as ajax is actually not used.
-  $filtering_active = $filtering_active && module_exists('ctools');
-
-  if ($filtering_active) {
-    // Add form elements for filters.
-    // @todo Add configuration interface for filters.
-    require_once 'filters/content_menu_domain_filter.php';
-    require_once 'filters/content_menu_language_filter.php';
-    $filters = array(new content_menu_domain_filter(), new content_menu_language_filter($form['#menu']['menu_name']));
-    // Add filter widgets to form.
-    foreach ($filters as $f) {
-      $f->addFilterWidget($form, $form_state, $form_id);
-    }
+  // Add form elements for filters.
+  // @todo Add configuration interface for filters.
+  //require_once 'filters/content_menu_domain_filter.php';
+  require_once 'filters/content_menu_language_filter.php';
+  //$filters = array(new content_menu_domain_filter(), new content_menu_language_filter($form['#menu']['menu_name']));
+  $filters = array(new content_menu_language_filter($form['#menu']['menu_name']));
+  // Add filter widgets to form.
+  foreach ($filters as $f) {
+    $f->addFilterWidget($form, $form_state, $form_id);
   }
 
   // ToDo: Clean up and untangle operations-changing and target_content setting.
@@ -58,13 +52,11 @@ function _content_menu_form_menu_overview_form_alter(&$form, &$form_state, $form
   // Adjust operations for each item.
   foreach (element_children($form) as $mlid) {
     $el = &$form[$mlid];
-    if ($filtering_active) {
-      foreach ($filters as $f) {
-        if ($f->hideElement($el)) {
-          unset($form[$mlid]);
-          $hidden[$el['#item']['mlid']] = $el['#item']['mlid'];
-          continue;
-        }
+    foreach ($filters as $f) {
+      if ($f->hideElement($el)) {
+        unset($form[$mlid]);
+        $hidden[$el['#item']['mlid']] = $el['#item']['mlid'];
+        continue;
       }
     }
     if (isset($el['#item']['plid']) &&
@@ -79,47 +71,13 @@ function _content_menu_form_menu_overview_form_alter(&$form, &$form_state, $form
     $el['#inline_edit_title'] = TRUE;
     if (isset($form[$mlid]['operations'])) {
       // Invoke hook to let modules provide target operations for new item.
-      drupal_alter('menu_item_element', $el);
+      backdrop_alter('menu_item_element', $el);
 
       // Make sure that operations are ordered by their weight, then unset it.
-      uasort($el['operations'], 'drupal_sort_weight');
-      foreach ($el['operations'] as $el_op_key => $el_op) {
+      backdrop_sort($el['operations']['#links'], array('weight' => SORT_NUMERIC));
+      foreach ($el['operations']['#links'] as $el_op_key => $el_op) {
         unset($el['operations'][$el_op_key]['weight']);
       }
-
-      // Wrap link-type operations into CTools dropbutton, if available.
-      if (module_exists('ctools') && isset($el['operations'])) {
-        // Split up operation in dropbutton-ops and other ops.
-        $other_operations  = array();
-        $dropbutton_operations = array();
-        foreach ($form[$mlid]['operations'] as $op_key => $op_item) {
-          if (is_array($op_item) && isset($op_item['#type'])) {
-            if ($op_item['#type'] == 'link') {
-              $dropbutton_operations[$op_key] = array(
-                'title' => $op_item['#title'],
-                'href'  => $op_item['#href'],
-              );
-              if (isset($op_item['#options'])) {
-                $dropbutton_operations[$op_key] += $op_item['#options'];
-              }
-            }
-            else {
-              $other_operations[$op_key] = $op_item;
-            }
-          }
-        }
-
-        // Compose operation from dropbutton and other ops.
-        $el['operations'] = array();
-        $el['operations']['dropbutton_operations'] = array(
-          '#theme' => 'links__ctools_dropbutton',
-          '#links' => $dropbutton_operations,
-        );
-        $el['operations'] += $other_operations;
-      }
-
-      // Count operations of this item.
-      $el['#operations_count'] = count($form[$mlid]['operations']);
     }
 
     // Add inline-editing for menu item title.
@@ -134,7 +92,7 @@ function _content_menu_form_menu_overview_form_alter(&$form, &$form_state, $form
         '#prefix' => '<span class="menu-overview-title-link">' . $el['title']['#markup'] . '</span>',
         '#suffix' => '<a href="javascript:void();" title="Click to edit title" class="menu-overview-title-edit-trigger">' . t('edit title') . '</a>',
       );
-      $form['#attached']['js'] = array(drupal_get_path('module', 'content_menu') . '/content_menu.js');
+      $form['#attached']['js'] = array(backdrop_get_path('module', 'content_menu') . '/content_menu.js');
     }
 
   }
@@ -142,8 +100,8 @@ function _content_menu_form_menu_overview_form_alter(&$form, &$form_state, $form
   // Add "add item" item/row/elements.
   content_menu_form_menu_overview_form_alter_additem($form);
 
-  // Add css as via drupal_add_css and put it after ctools button css files.
-  drupal_add_css(drupal_get_path('module', 'content_menu') . "/css/content_menu.css", array('weight' => 2));
+  // Add css as via backdrop_add_css and put it after ctools button css files.
+  backdrop_add_css(backdrop_get_path('module', 'content_menu') . "/css/content_menu.css", array('weight' => 2));
 
   // Change submit handler function to our own implementation.
   $form['#submit'] = array('content_menu_menu_overview_form_submit_extended');
@@ -171,15 +129,15 @@ function _content_menu_form_menu_overview_form_alter(&$form, &$form_state, $form
  */
 function _content_menu_menu_item_element_alter(&$el) {
   $el_item = &$el['#item'];
-  $el_ops = &$el['operations'];
+  $el_ops = &$el['operations']['#links'];
   $target_content = '';
 
-  $link_path = ($el_item['link_path'] == '<front>') ? variable_get('site_frontpage', 'node') : $el_item['link_path'];
+  $link_path = ($el_item['link_path'] == '<front>') ? config_get('system.core', 'site_frontpage') : $el_item['link_path'];
   $link_path = (array) explode('/', $link_path);
   $link_path = array_pad($link_path, 2, '');
 
   // Change "edit" operation.
-  if (isset($el_ops['edit']) && ($el_ops['edit']['#type'] == 'link')) {
+  if (isset($el_ops['edit'])) {
 
     $el_ops['edit']['weight'] = 1;
 
@@ -187,13 +145,10 @@ function _content_menu_menu_item_element_alter(&$el) {
     $selectcontenturl = content_menu_variable_get_add_existing_content_url();
     if ($selectcontenturl) {
       $el_ops['selectcontent'] = array(
-        '#type' => 'link',
         'weight' => 2,
-        '#title' => t('select content'),
-        '#href' => $selectcontenturl,
-        '#options' => array(
-          'query' => content_menu_assemble_query_string($el_item),
-        ),
+        'title' => t('select content'),
+        'href' => $selectcontenturl,
+        'query' => content_menu_assemble_query_string($el_item),
       );
     }
 
@@ -203,16 +158,13 @@ function _content_menu_menu_item_element_alter(&$el) {
       foreach (node_type_get_types() as $node_type) {
         $type = $node_type->type;
         if (user_access('create ' . $type . ' content')) {
-          $node_menu_options = variable_get('menu_options_' . $type, array('main-menu' => 'main-menu'));
+          $node_menu_options = config_get('node.type.' . $type ,'settings.menu_options');
           if (in_array($el_item['menu_name'], $node_menu_options)) {
             $el_ops['new_' . $type] = array(
-              '#type' => 'link',
               'weight' => 10 + $node_type_count,
-              '#title' => t('New @type', array('@type' => t($node_type->name))),
-              '#href' => 'node/add/' . str_replace("_", "-", $type),
-              '#options' => array(
-                'query' => content_menu_assemble_query_string($el_item),
-              ),
+              'title' => t('New @type', array('@type' => t($node_type->name))),
+              'href' => url('node/add/' . str_replace("_", "-", $type)),
+              'query' => content_menu_assemble_query_string($el_item),
             );
           }
         }
@@ -221,7 +173,7 @@ function _content_menu_menu_item_element_alter(&$el) {
 
     // Add "configure" operation by cloning "edit" operation.
     $el_ops['configure'] = $el_ops['edit'];
-    $el_ops['configure']['#title'] = t('configure item');
+    $el_ops['configure']['title'] = t('configure item');
     $el_ops['configure']['weight'] = 3;
 
     // Change "edit" operation to ...
@@ -234,7 +186,7 @@ function _content_menu_menu_item_element_alter(&$el) {
       $node = node_load($link_path[1]);
       if (is_object($node)) {
         if (node_access('update', $node)) {
-          $el_ops['edit']['#href'] = 'node/' . $link_path[1] . '/edit';
+          $el_ops['edit']['href'] = 'node/' . $link_path[1] . '/edit';
         }
         $node_type = node_type_get_type($node);
         $target_content = t($node_type->name);
@@ -244,22 +196,22 @@ function _content_menu_menu_item_element_alter(&$el) {
         }
       }
     }
-    // ... lead to panel page edit form for panel paged.
-    elseif (($el_item['page_callback'] == 'page_manager_page_execute')) {
-      if (user_access('use page manager')) {
+    // ... lead to layout edit form for layout pages.
+    elseif (($el_item['page_callback'] == 'layout_page_callback')) {
+      if (user_access('administer layouts')) {
         $page_arguments = unserialize($el_item['page_arguments']);
-        $el_ops['edit']['#href'] = 'admin/structure/pages/edit/page-' . implode('/', $page_arguments);
+        $el_ops['edit']['href'] = 'admin/structure/layouts/manage/' . $page_arguments[0];
       }
-      $target_content = t('Panel');
+      $target_content = t('Layout');
     }
     // ... lead to view edit form for views.
     elseif ($el_item['page_callback'] == 'views_page') {
       if (user_access('administer views')) {
         $page_arguments = unserialize($el_item['page_arguments']);
-        $el_ops['edit']['#href'] = 'admin/structure/views/view/' . $page_arguments[0] . '/edit/' . $page_arguments[1];
+        $el_ops['edit']['href'] = 'admin/structure/views/view/' . $page_arguments[0] . '/configure/' . $page_arguments[1];
       }
-      $el_ops['selectcontent']['#href'] = CONTENT_MENU_ADD_EXISTING_VIEW_URL;
-      $el_ops['selectcontent']['#title'] = t('select view');
+      $el_ops['selectcontent']['href'] = CONTENT_MENU_ADD_EXISTING_VIEW_URL;
+      $el_ops['selectcontent']['title'] = t('select view');
       $target_content = t('View');
     }
     // ... menu position rule.
@@ -283,34 +235,36 @@ function _content_menu_menu_item_element_alter(&$el) {
     }
 
     // Delete the "edit" operation altogether if its url didn't change.
-    if (isset($el_ops['edit']['#href'])) {
-      if ($el_ops['edit']['#href'] == $el_ops['configure']['#href']) {
-        $el_ops['edit'] = array();
+    if (isset($el_ops['edit']['href'])) {
+      if ($el_ops['edit']['href'] == $el_ops['configure']['href']) {
+        unset($el_ops['edit']);
         $el_ops['selectcontent']['weight'] = 4;
       }
       else {
-        $el_ops['edit']['#title'] = t('edit content');
-        $el_ops['edit']['#options']['query']['destination'] = current_path();
+        $el_ops['edit']['title'] = t('edit content');
+        $el_ops['edit']['query']['destination'] = current_path();
       }
     }
-  }
-  else {
-    $el_ops['edit'] = array();
   }
 
   // Add "delete" operation for menu_position items.
   if (!isset($el_ops['delete']) && ($link_path[0] == 'menu-position') && (is_numeric($link_path[1]) && user_access('administer menu positions'))) {
     $el_ops['delete'] = array(
-      '#type' => 'link',
-      '#title' => t('delete'),
-      '#href' => 'admin/structure/menu-position/delete/' . intval($link_path[1]),
-      '#options' => array('query' => array('destination' => current_path())),
+      'title' => t('delete'),
+      'href' => 'admin/structure/menu-position/delete/' . intval($link_path[1]),
+      'query' => array('destination' => current_path()),
     );
+  }
+
+  // Push "reset" operation to end of ops list.
+  if (isset($el_ops['reset'])) {
+    $el_ops['reset']['title'] = t('reset item');
+    $el_ops['reset']['weight'] = 90;
   }
 
   // Push "delete" operation to end of ops list.
   if (isset($el_ops['delete'])) {
-    $el_ops['delete']['#title'] = t('delete item');
+    $el_ops['delete']['title'] = t('delete item');
     $el_ops['delete']['weight'] = 100;
   }
 
@@ -377,7 +331,7 @@ function content_menu_form_menu_overview_form_alter_additem(&$form) {
     '#type'      => 'select',
     '#title'     => '&nbsp;',
     '#options'   => $target_types,
-    '#default_value' => variable_get('content_menu_default_add_operation', 'url'),
+    '#default_value' => config_get('content_menu.settings', 'default_add_operation'),
   );
 }
 
@@ -396,23 +350,15 @@ function content_menu_form_menu_overview_form_alter_additem(&$form) {
 function theme_menu_overview_form_extended($variables) {
   $form = $variables['form'];
 
-  drupal_add_tabledrag('menu-overview', 'match', 'parent', 'menu-plid', 'menu-plid', 'menu-mlid', TRUE, MENU_MAX_DEPTH - 1);
-  drupal_add_tabledrag('menu-overview', 'order', 'sibling', 'menu-weight');
-
-  // Count max number of operations per item.
-  $operations_count_max = 1;
-  foreach (element_children($form) as $mlid) {
-    if (isset($form[$mlid]['#operations_count'])) {
-      $operations_count_max = max($operations_count_max, $form[$mlid]['#operations_count']);
-    }
-  }
+  backdrop_add_tabledrag('menu-overview', 'match', 'parent', 'menu-plid', 'menu-plid', 'menu-mlid', TRUE, MENU_MAX_DEPTH - 1);
+  backdrop_add_tabledrag('menu-overview', 'order', 'sibling', 'menu-weight');
 
   $header = array(
     t('Menu link'),
     array('data' => t('Enabled'), 'class' => array('checkbox')),
     t('Weight'),
     t('Target'),
-    array('data' => t('Operations'), 'colspan' => $operations_count_max),
+    t('Operations'),
   );
 
   // Build item tables.
@@ -420,14 +366,6 @@ function theme_menu_overview_form_extended($variables) {
   foreach (element_children($form) as $mlid) {
     if (isset($form[$mlid]['hidden'])) {
       $element = &$form[$mlid];
-      // Build a list of operations.
-      $operations = array();
-      foreach (element_children($element['operations']) as $op) {
-        $operations[] = array('data' => drupal_render($element['operations'][$op]), 'class' => array('menu-operations'));
-      }
-      while (count($operations) < $operations_count_max) {
-        $operations[] = '';
-      }
 
       // Add special classes to be used for tabledrag.js.
       $element['plid']['#attributes']['class'] = array('menu-plid');
@@ -440,11 +378,11 @@ function theme_menu_overview_form_extended($variables) {
       $depth = isset($element['#item']) ? $element['#item']['depth'] : 1;
 
       $row = array();
-      $row[] = theme('indentation', array('size' => $depth - 1)) . drupal_render($element['title']);
-      $row[] = array('data' => drupal_render($element['hidden']), 'class' => array('checkbox', 'menu-enabled'));
-      $row[] = drupal_render($element['weight']) . drupal_render($element['plid']) . drupal_render($element['mlid']);
-      $row[] = array('data' => drupal_render($element['target_content']), 'class' => array('menu-target-content'));
-      $row = array_merge($row, $operations);
+      $row[] = theme('indentation', array('size' => $depth - 1)) . backdrop_render($element['title']);
+      $row[] = array('data' => backdrop_render($element['hidden']), 'class' => array('checkbox', 'menu-enabled'));
+      $row[] = backdrop_render($element['weight']) . backdrop_render($element['plid']) . backdrop_render($element['mlid']);
+      $row[] = array('data' => backdrop_render($element['target_content']), 'class' => array('menu-target-content'));
+      $row[] = backdrop_render($element['operations']);
 
       $row = array_merge(array('data' => $row), $element['#attributes']);
       $row['class'][] = 'draggable';
@@ -465,11 +403,11 @@ function theme_menu_overview_form_extended($variables) {
   // Render selection filter widgets on top.
   if (isset($form['#content_menu_filter_widget'])) {
     foreach ($form['#content_menu_filter_widget'] as $widgetname) {
-      $output .= drupal_render($form[$widgetname]);
+      $output .= backdrop_render($form[$widgetname]);
     }
   }
   $output .= theme('table', array('header' => $header, 'rows' => $rows, 'attributes' => array('id' => 'menu-overview')));
-  $output .= drupal_render_children($form);
+  $output .= backdrop_render_children($form);
   return $output;
 }
 
@@ -548,7 +486,7 @@ function content_menu_menu_overview_form_submit_extended($form, &$form_state) {
  * Menu add item operation handler for a new dummy menu item.
  */
 function content_menu_menu_form_handler_dummy($form, $form_state, $item) {
-  drupal_set_message(t('A new menu item has been created.'));
+  backdrop_set_message(t('A new menu item has been created.'));
   $item['link_path'] = 'menu-dummy';
   content_menu_link_save($item);
 }
@@ -559,10 +497,10 @@ function content_menu_menu_form_handler_dummy($form, $form_state, $item) {
  */
 function content_menu_menu_form_handler_node($form, $form_state, $item, $type) {
   $types = node_type_get_types();
-  drupal_set_message(t("You're about to create a new menu item with new %type content.", array('%type' => $types[$type]->name)));
-  drupal_set_message(t('Complete the process by filling out and saving the form below.'));
+  backdrop_set_message(t("You're about to create a new menu item with new %type content.", array('%type' => $types[$type]->name)));
+  backdrop_set_message(t('Complete the process by filling out and saving the form below.'));
   $type = str_replace("_", "-", $type);
-  drupal_goto('node/add/' . $type, array('query' => content_menu_assemble_query_string($item)));
+  backdrop_goto('node/add/' . $type, array('query' => content_menu_assemble_query_string($item)));
 }
 
 
@@ -570,9 +508,9 @@ function content_menu_menu_form_handler_node($form, $form_state, $item, $type) {
  * Menu add item operation handler for a new generic menu item.
  */
 function content_menu_menu_form_handler_url($form, $form_state, $item) {
-  drupal_set_message(t("You're about to create a new generic menu item linking to a URL path."));
-  drupal_set_message(t('Complete the process by filling out and saving the form below.'));
-  drupal_goto('admin/structure/menu/manage/' . $item['name'] . '/add', array('query' => content_menu_assemble_query_string($item)));
+  backdrop_set_message(t("You're about to create a new generic menu item linking to a URL path."));
+  backdrop_set_message(t('Complete the process by filling out and saving the form below.'));
+  backdrop_goto('admin/structure/menu/manage/' . $item['name'] . '/add', array('query' => content_menu_assemble_query_string($item)));
 }
 
 
@@ -580,9 +518,9 @@ function content_menu_menu_form_handler_url($form, $form_state, $item) {
  * Menu add item operation handler for a new generic menu item.
  */
 function content_menu_menu_form_handler_menu_position_rule($form, $form_state, $item) {
-  drupal_set_message(t("You're about to create a new generic menu position rule."));
-  drupal_set_message(t('Complete the process by filling out and saving the form below.'));
-  drupal_goto('admin/structure/menu-position/add', array('query' => content_menu_assemble_query_string($item)));
+  backdrop_set_message(t("You're about to create a new generic menu position rule."));
+  backdrop_set_message(t('Complete the process by filling out and saving the form below.'));
+  backdrop_goto('admin/structure/menu-position/add', array('query' => content_menu_assemble_query_string($item)));
 }
 
 
@@ -596,9 +534,9 @@ function content_menu_menu_form_handler_menu_position_existing($form, $form_stat
     content_menu_menu_form_handler_url($form, $form_state, $item);
   }
   else {
-    drupal_set_message(t("You're about to create a new menu item for an existing content."));
-    drupal_set_message(t('Complete the process by finding and selecting an existing content to add to the menu.'));
-    drupal_goto($url, array('query' => content_menu_assemble_query_string($item)));
+    backdrop_set_message(t("You're about to create a new menu item for an existing content."));
+    backdrop_set_message(t('Complete the process by finding and selecting an existing content to add to the menu.'));
+    backdrop_goto($url, array('query' => content_menu_assemble_query_string($item)));
   }
 }
 
@@ -606,19 +544,15 @@ function content_menu_menu_form_handler_menu_position_existing($form, $form_stat
  * Menu add item operation handler for a new menu item to an existing view.
  */
 function content_menu_menu_form_handler_existing_view($form, $form_state, $item) {
-  drupal_set_message(t("You're about to create a new menu item for an existing view."));
-  drupal_set_message(t('Complete the process by finding and selecting the view to add to the menu.'));
-  drupal_goto(CONTENT_MENU_ADD_EXISTING_VIEW_URL, array('query' => content_menu_assemble_query_string($item)));
+  backdrop_set_message(t("You're about to create a new menu item for an existing view."));
+  backdrop_set_message(t('Complete the process by finding and selecting the view to add to the menu.'));
+  backdrop_goto(CONTENT_MENU_ADD_EXISTING_VIEW_URL, array('query' => content_menu_assemble_query_string($item)));
 }
 
 /**
  * List all views with a page display.
  */
 function content_menu_add_exiting_view($form, $form_state) {
-  if (!module_exists('views')) {
-    return;
-  }
-
   $form = array();
 
   $item = content_menu_get_menu_item_from_querystring();
@@ -631,7 +565,7 @@ function content_menu_add_exiting_view($form, $form_state) {
         if ((!property_exists($view, 'disabled') || (property_exists($view, 'disabled') && !$view->disabled))) {
           $view_path = $display->display_options['path'];
           $view_title = check_plain($view->name . ' - ' . $display->display_title . ' (' . $display->display_options['path'] . ')');
-          if (drupal_valid_path($view_path)) {
+          if (backdrop_valid_path($view_path)) {
             $options[$view_path] = $view_title;
           }
         }
@@ -706,7 +640,7 @@ function content_menu_get_target_types($menu_name) {
   // Invoke hook to let modules provide target operations for new item.
   $target_types = array();
   $context = array('menu_name' => $menu_name);
-  drupal_alter('menu_item_target_types', $target_types, $context);
+  backdrop_alter('menu_item_target_types', $target_types, $context);
   return $target_types;
 }
 
@@ -732,7 +666,7 @@ function _content_menu_menu_item_target_types_alter(&$target_types, &$context) {
 
   foreach (node_type_get_types() as $node_type) {
     if (user_access('create ' . $node_type->type . ' content') || user_access('administer nodes')) {
-      $node_menu_options = variable_get('menu_options_' . $node_type->type, array('main-menu' => 'main-menu'));
+      $node_menu_options = config_get('node.type.' . $node_type->type, 'settings.menu_options');
       if (in_array($context['menu_name'], $node_menu_options)) {
 
         $target_types['node_' . $node_type->type] = array(
@@ -752,13 +686,11 @@ function _content_menu_menu_item_target_types_alter(&$target_types, &$context) {
     'clean_menu_save_message' => TRUE,
   );
 
-  if (module_exists('views')) {
-    $target_types['existing_view'] = array(
-      'label' => t('Existing view'),
-      'handler' => 'content_menu_menu_form_handler_existing_view',
-      'clean_menu_save_message' => TRUE,
-    );
-  }
+  $target_types['existing_view'] = array(
+    'label' => t('Existing view'),
+    'handler' => 'content_menu_menu_form_handler_existing_view',
+    'clean_menu_save_message' => TRUE,
+  );
 
   if (module_exists('menu_position') && user_access('administer menu positions')) {
     $target_types['menu_position_rule'] = array(

@@ -1,5 +1,5 @@
 (function($){
-    Drupal.behaviors.content_menu ={
+    Backdrop.behaviors.content_menu ={
         attach:function(context, settings){
             // Show menu item title input field when clicking on the trigger.
             $('.menu-overview-title-edit-trigger', context).click(function(e) {

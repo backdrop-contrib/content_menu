@@ -2,5 +2,5 @@ name = "Content Menu"
 dependencies[] = "menu"
 description = "Content centric menu management interface for editors."
 package = User interface
-core = "7.x"
-php = "5.2.4"
+backdrop = 1.x
+type = module
