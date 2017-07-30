@@ -314,12 +314,7 @@ function content_menu_form_menu_overview_form_alter_additem(&$form) {
     ),
   );
 
-  $target_types = content_menu_get_target_types($form['#menu']['menu_name']);
-
-  // Retrieve possible add-"type"-operations for "Add link" item.
-  foreach ($target_types as $op_key => $op_info) {
-    $target_types[$op_key] = $op_info['label'];
-  }
+  $target_types = content_menu_get_target_types($form['#menu']['menu_name'], TRUE);
 
   // Build "type" select for "Add link" item.
   $form['additem']['target_content'] = array(
@@ -636,11 +631,17 @@ function content_menu_assemble_query_string($item) {
 /**
  * Retrieve all supported menu add item operations.
  */
-function content_menu_get_target_types($menu_name) {
+function content_menu_get_target_types($menu_name, $options = FALSE) {
   // Invoke hook to let modules provide target operations for new item.
   $target_types = array();
   $context = array('menu_name' => $menu_name);
   backdrop_alter('menu_item_target_types', $target_types, $context);
+  // Retrieve items for form element.
+  if ($options) {
+    foreach ($target_types as $op_key => $op_info) {
+      $target_types[$op_key] = $op_info['label'];
+    }
+  }
   return $target_types;
 }
 

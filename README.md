@@ -53,7 +53,7 @@ Menu management forms and pages
 
 ## Differences from drupal version
 
-Menus overview tweak and "Administer system menus" permission was removed in favor of [Menu Administration Per Menu](https://github.com/backdrop-contrib/menu_admin_per_menu) module. This functionality wasn't properly implemented in Content menu. System menus was removed from menus overview page but still was available for editing by users without "Administer system menus" permission.
+Menus overview tweak and "Administer system menus" permission was removed in favor of [Menu Administration Per Menu](https://github.com/backdrop-contrib/menu_admin_per_menu) module. This functionality wasn't properly implemented in Content menu. System menus were removed from menus overview page but still were available for editing by users without "Administer system menus" permission.
 
 ## Resources
 
