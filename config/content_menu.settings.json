@@ -1,13 +1,14 @@
 {
   "_config_name": "content_menu.settings",
     "alter_all_menus": 0,
+    "config_menus": {
+        "main-menu": "main-menu",
+        "user-menu": 0,
+        "management": 0
+    },
     "add_existing_content_view": "menu_existing_content_selection",
     "add_existing_content_url": "admin/structure/menu/manage/add_existing_content",
     "default_add_operation": "url",
-    "special_menus": [
-        "management",
-        "user-menu",
-        "devel"
-    ]
+    "simplify_menu_edit_item_form": 0
 }
 

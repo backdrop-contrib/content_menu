@@ -27,6 +27,15 @@ define('CONTENT_MENU_ADD_ITEM_WEIGHT', 50);
  * Implements hook_menu().
  */
 function content_menu_menu() {
+  $items['admin/config/user-interface/contentmenu'] = array(
+    'title' => 'Content Menu Settings',
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('content_menu_settings'),
+    'description' => 'Configure settings for content menu module.',
+    'access arguments' => array('administer content menu'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'content_menu.admin.inc',
+  );
   // Add menu router item for use as target with dummy menu items.
   $items['menu-dummy'] = array(
     'title' => 'Placeholder for menu item dummies.',
@@ -42,8 +51,22 @@ function content_menu_menu() {
     'access arguments' => array('access content'),
     'file' => 'content_menu.menu_admin.inc',
   );
+  
 
   return $items;
+}
+
+
+/**
+ * Implements hook_permission().
+ */
+function content_menu_permission() {
+  return array(
+    'administer content menu' => array(
+      'title' => t('Administer Content Menu'),
+      'description' => t('Allows configuration of Content Menu'),
+    ),
+  );
 }
 
 
@@ -366,15 +389,13 @@ function content_menu_node_insert($node) {
  * Improve menu item management for node edit forms.
  */
 function content_menu_form_node_form_alter(&$form, &$form_state, $form_id) {
-  // Add link to menu overview / admin form to menu fieldset.
-  if (user_access('administer menu')) {
-    if (isset($form['menu'])) {
+  if (isset($form['menu'])) {
+    // Add link to menu overview / admin form to menu fieldset.
+    if (user_access('administer menu')) {
       $menu = explode(':', $form['menu']['link']['parent']['#default_value']);
       $form['menu']['link']['menu_admin_link'] = array('#type' => 'markup', '#markup' => l(t('Manage menu structure') . ' …', 'admin/structure/menu/manage/' . $menu[0], array('attributes' => array('target' => '_blank'))));
     }
-  }
-
-  if (isset($form['menu'])) {
+    
     if (isset($_GET['menu_link_path']) && $_GET['menu_link_path'] == 'menu-dummy') {
       // If this node is being created to replace a menu dummy, substitute
       // the usual menu form for a description of what will happen.
@@ -444,8 +465,8 @@ function content_menu_get_menu_item_from_querystring() {
  * Check if a given menu (name) applies for being considered by this module.
  */
 function content_menu_is_menu_considered($menu_name) {
-  $exclude_menus = config_get('content_menu.settings', 'special_menus');
-  return !in_array($menu_name, $exclude_menus);
+  $menus = config_get('content_menu.settings', 'config_menus');
+  return $menus[$menu_name];
 }
 
 
